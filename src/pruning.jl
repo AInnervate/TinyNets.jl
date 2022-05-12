@@ -57,6 +57,8 @@ function droprand!(A::SparseMatrixCSC, p::AbstractFloat)
     end
 
     dropzeros!(A)
+
+    return A
 end
 
 function droprand!(A::SparseMatrixCSC, n::Integer)
@@ -68,6 +70,8 @@ function droprand!(A::SparseMatrixCSC, n::Integer)
     A.nzval[idx] .= 0
 
     dropzeros!(A)
+
+    return A
 end
 
 function droppercentage!(A::SparseMatrixCSC, p::Real)
@@ -82,6 +86,8 @@ function droppercentage!(A::SparseMatrixCSC, p::Real)
     end
 
     dropzeros!(A)
+
+    return A
 end
 
 function dropquantity!(A::SparseMatrixCSC, n::Integer)
@@ -93,6 +99,8 @@ function dropquantity!(A::SparseMatrixCSC, n::Integer)
     A.nzval[idx] .= 0
 
     dropzeros!(A)
+
+    return A
 end
 
 
@@ -153,18 +161,18 @@ function prunelayer(layer::Dense, s::PruningSchedule)::Dense
 end
 
 
-begin
-    layer = Conv((3, 3), 2 => 2)
+# begin
+#     layer = Conv((3, 3), 2 => 2)
 
-    display(layer.weight)
-    display(layer.bias)
-    display(layer.σ)
+#     display(layer.weight)
+#     display(layer.bias)
+#     display(layer.σ)
 
-    s = SequencePruning([PruneByMagnitude(0.7), PruneByQuantity(2)])
+#     s = SequencePruning([PruneByMagnitude(0.7), PruneByQuantity(2)])
     
-    model = prunelayer(layer, s)
+#     model = prunelayer(layer, s)
 
-    display(model.weight)
-    display(model.bias)
-    display(model.σ)
-end
+#     display(model.weight)
+#     display(model.bias)
+#     display(model.σ)
+# end

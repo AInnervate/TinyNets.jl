@@ -1,4 +1,4 @@
-include("pruning.jl")
+include("../src/pruning.jl")
 
 using Test
 using Flux
