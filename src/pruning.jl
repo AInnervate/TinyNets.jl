@@ -7,20 +7,20 @@ abstract type PruningMethod end
 
 struct PruneByIdentity <: PruningMethod end
 
-struct PruneRandomly <: PruningMethod
-    value::Number
+struct PruneRandomly{T} <: PruningMethod
+    value::T
 end
 
-struct PruneByMagnitude <: PruningMethod
-    value::Number
+struct PruneByMagnitude{T} <: PruningMethod
+    value::T
 end
 
-struct PruneByPercentage <: PruningMethod
-    value::Number
+struct PruneByPercentage{T} <: PruningMethod
+    value::T
 end
 
-struct PruneByQuantity <: PruningMethod
-    value::Integer
+struct PruneByQuantity{T} <: PruningMethod
+    value::T
 end
 
 
