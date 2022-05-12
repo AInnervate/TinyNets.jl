@@ -1,9 +1,19 @@
 image: julia:1.7
 
+stages:
+  - build
+  - test
+
 build:
+  stage: build
+  tags:
+    - ci-shared
   script:
     - julia --project=@. -e "import Pkg; Pkg.build()"
 
 test:
+  stage: test
+  tags:
+    - ci-shared
   script:
     - julia --project=@. test/runtests.jl
