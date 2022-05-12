@@ -1,0 +1,9 @@
+image: julia:1.7
+
+build:
+  - script:
+    - julia --project=@. -e "import Pkg; Pkg.build()"
+
+test:
+  script:
+    - julia --project=@. test/runtests.jl
