@@ -31,18 +31,6 @@ struct SequencePruning <: PruningSchedule
 end
 
 
-# using SparseArrays: dropstored!
-
-# function dropindex!(A::SparseMatrixCSC, v::Vector{T}) where T<:Integer
-#     #fkeep!(A, (i, j, x) -> i * lengthA( + j == v))
-#     idxs = CartesianIndices(size(A))[v]
-#     @show idxs
-#     for i ∈ idxs
-#         @show i
-#         dropstored!(A, i[1], i[2])
-#     end
-# end
-
 # if A contain zeros, the end result could be undesired, since some
 #  zeros may remain and will be erased after dropzeros call
 function droprand!(A::SparseMatrixCSC, p::AbstractFloat)
@@ -156,20 +144,3 @@ function prunelayer(layer::Dense, s::PruningSchedule)::Dense
     chain = Chain(Base.Fix2.(prunelayer, s.methods))
     chain(layer)
 end
-
-
-# begin
-#     layer = Conv((3, 3), 2 => 2)
-
-#     display(layer.weight)
-#     display(layer.bias)
-#     display(layer.σ)
-
-#     s = SequencePruning([PruneByMagnitude(0.7), PruneByQuantity(2)])
-    
-#     model = prunelayer(layer, s)
-
-#     display(model.weight)
-#     display(model.bias)
-#     display(model.σ)
-# end
