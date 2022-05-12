@@ -33,6 +33,8 @@ struct SequencePruning <: PruningSchedule
 end
 
 
+numofnonzerostoremove(A::SparseMatrixCSC, n::Integer)::Integer = n - (length(A) - nnz(A))
+
 # TODO: if A contain zeros, the end result could be undesired, since some
 #  zeros may remain and will be erased after dropzeros call
 # TODO: check which is faster (1) dropzeros!(A) followed by nnz(A) or 
@@ -43,53 +45,45 @@ function droprand!(A::SparseMatrixCSC, p::AbstractFloat)::SparseMatrixCSC
     # num of non-zeros to drop
     n = round(Integer, p * length(A))
     
-    droprand!(A, n)
-
-    return A
+    return droprand!(A, n)
 end
 
 function droprand!(A::SparseMatrixCSC, n::Integer)::SparseMatrixCSC
     @assert n ≥ zero(n)
 
-    k = n - (length(A) - nnz(A))
+    nzr = numofnonzerostoremove(A, n)
 
-    if k > 0
-        @views idx = shuffle(eachindex(A.nzval))[1:k]
+    if nzr > 0
+        @views idx = shuffle(eachindex(A.nzval))[1:nzr]
         A.nzval[idx] .= 0
     end
 
-    dropzeros!(A)
-
-    return A
+    return dropzeros!(A)
 end
 
 function droppercentage!(A::SparseMatrixCSC, p::AbstractFloat)::SparseMatrixCSC
     @assert zero(p) ≤ p ≤ one(p)
     
     n = round(Integer, p * length(A))
-    k = n - (length(A) - nnz(A))
+    nzr = numofnonzerostoremove(A, n)
 
-    if k > 0 
-        @views idx = partialsortperm(A.nzval, 1:k, by=abs)
+    if nzr > 0 
+        @views idx = partialsortperm(A.nzval, 1:nzr, by=abs)
         A.nzval[idx] .= 0
     end
 
-    dropzeros!(A)
-
-    return A
+    return dropzeros!(A)
 end
 
 function dropquantity!(A::SparseMatrixCSC, n::Integer)::SparseMatrixCSC
     @assert n ≥ 0
 
-    k = n - (length(A) - nnz(A))
+    nzr = numofnonzerostoremove(A, n)
 
-    @views idx = partialsortperm(A.nzval, 1:k, by=abs)
+    @views idx = partialsortperm(A.nzval, 1:nzr, by=abs)
     A.nzval[idx] .= 0
 
-    dropzeros!(A)
-
-    return A
+    return dropzeros!(A)
 end
 
 
