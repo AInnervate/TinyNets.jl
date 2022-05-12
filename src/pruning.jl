@@ -43,20 +43,15 @@ end
 #     end
 # end
 
+# if A contain zeros, the end result could be undesired, since some
+#  zeros may remain and will be erased after dropzeros call
 function droprand!(A::SparseMatrixCSC, p::AbstractFloat)
     @assert zero(p) ≤ p ≤ one(p)
 
     # num of non-zeros to drop
     n = round(Integer, p * length(A))
-    k = n - (length(A) - nnz(A))
-
-    if k > 0
-        # TODO: add inbounds
-        @views idx = shuffle(eachindex(A.nzval))[1:k]
-        A.nzval[idx] .= 0
-    end
-
-    dropzeros!(A)
+    
+    droprand!(A, n)
 
     return A
 end
@@ -66,8 +61,10 @@ function droprand!(A::SparseMatrixCSC, n::Integer)
 
     k = n - (length(A) - nnz(A))
 
-    @views idx = shuffle(eachindex(A.nzval))[1:k]
-    A.nzval[idx] .= 0
+    if k > 0
+        @views idx = shuffle(eachindex(A.nzval))[1:k]
+        A.nzval[idx] .= 0
+    end
 
     dropzeros!(A)
 
