@@ -7,13 +7,13 @@ stages:
 build:
   stage: build
   tags:
-    - ci-shared
+    - ci.inria.fr
   script:
     - julia --project=@. -e "import Pkg; Pkg.build()"
 
 test:
   stage: test
   tags:
-    - ci-shared
+    - ci.inria.fr
   script:
     - julia --project=@. test/runtests.jl
