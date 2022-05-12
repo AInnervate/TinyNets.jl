@@ -63,7 +63,7 @@ end
     @test new_model.bias == model.bias
     @test new_model.σ == model.σ
 
-    @test_throws AssertionError prunelayer(model, PruneByPercentage(4))
+    @test_throws AssertionError prunelayer(model, PruneByPercentage(4.0))
     @test_throws AssertionError prunelayer(model, PruneByPercentage(1.5))
     @test_throws AssertionError prunelayer(model, PruneByPercentage(-0.5))
 end

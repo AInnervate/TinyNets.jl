@@ -7,33 +7,37 @@ abstract type PruningMethod end
 
 struct PruneByIdentity <: PruningMethod end
 
-struct PruneRandomly{T} <: PruningMethod
+struct PruneRandomly{T<:Number} <: PruningMethod
     value::T
 end
 
-struct PruneByMagnitude{T} <: PruningMethod
+struct PruneByMagnitude{T<:AbstractFloat} <: PruningMethod
     value::T
 end
 
-struct PruneByPercentage{T} <: PruningMethod
+struct PruneByPercentage{T<:AbstractFloat} <: PruningMethod
     value::T
 end
 
-struct PruneByQuantity{T} <: PruningMethod
+struct PruneByQuantity{T<:Integer} <: PruningMethod
     value::T
 end
 
 
 abstract type PruningSchedule end
 
+# TODO: at this moment, the methods vector may contain 
+#  PruningMethods with different sizes. not ideal.
 struct SequencePruning <: PruningSchedule
     methods::Vector{PruningMethod}
 end
 
 
-# if A contain zeros, the end result could be undesired, since some
+# TODO: if A contain zeros, the end result could be undesired, since some
 #  zeros may remain and will be erased after dropzeros call
-function droprand!(A::SparseMatrixCSC, p::AbstractFloat)
+# TODO: check which is faster (1) dropzeros!(A) followed by nnz(A) or 
+#  (2) count(!iszero, A)
+function droprand!(A::SparseMatrixCSC, p::AbstractFloat)::SparseMatrixCSC
     @assert zero(p) ≤ p ≤ one(p)
 
     # num of non-zeros to drop
@@ -44,7 +48,7 @@ function droprand!(A::SparseMatrixCSC, p::AbstractFloat)
     return A
 end
 
-function droprand!(A::SparseMatrixCSC, n::Integer)
+function droprand!(A::SparseMatrixCSC, n::Integer)::SparseMatrixCSC
     @assert n ≥ zero(n)
 
     k = n - (length(A) - nnz(A))
@@ -59,7 +63,7 @@ function droprand!(A::SparseMatrixCSC, n::Integer)
     return A
 end
 
-function droppercentage!(A::SparseMatrixCSC, p::Real)
+function droppercentage!(A::SparseMatrixCSC, p::AbstractFloat)::SparseMatrixCSC
     @assert zero(p) ≤ p ≤ one(p)
     
     n = round(Integer, p * length(A))
@@ -75,7 +79,7 @@ function droppercentage!(A::SparseMatrixCSC, p::Real)
     return A
 end
 
-function dropquantity!(A::SparseMatrixCSC, n::Integer)
+function dropquantity!(A::SparseMatrixCSC, n::Integer)::SparseMatrixCSC
     @assert n ≥ 0
 
     k = n - (length(A) - nnz(A))
@@ -89,12 +93,12 @@ function dropquantity!(A::SparseMatrixCSC, n::Integer)
 end
 
 
-function prunelayer(layer::Any, pm::PruningMethod)
+function prunelayer(layer::Any, pm::PruningMethod)::Any
     @warn "Pruning not implemented for `$(Base.typename(typeof(layer)).wrapper)` layers."
     return layer
 end
 
-function prunelayer(chain::Chain, pm::PruningMethod)
+function prunelayer(chain::Chain, pm::PruningMethod)::Chain
     return Chain(prunelayer.(chain.layers, (pm,)))
 end
 
