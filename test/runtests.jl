@@ -32,6 +32,9 @@ end
 
     @test_throws AssertionError prunelayer(model, PruneRandomly(-0.5))
     @test_throws AssertionError prunelayer(model, PruneRandomly(-10))
+
+    @test_throws MethodError prunelayer(model, PruneByPercentage("abc"))
+    @test_throws MethodError prunelayer(model, PruneByPercentage([0.2, 1.4]))
 end
 
 @testset "magnitude pruning" begin
@@ -45,6 +48,11 @@ end
     @test new_model.weight == W3
     @test new_model.bias == model.bias
     @test new_model.σ == model.σ
+
+    @test_throws MethodError prunelayer(model, PruneByPercentage(21))
+    @test_throws MethodError prunelayer(model, PruneByPercentage(0x03))
+    @test_throws MethodError prunelayer(model, PruneByPercentage("abc"))
+    @test_throws MethodError prunelayer(model, PruneByPercentage([0.2, 1.4]))
 end
 
 @testset "percentage pruning" begin
@@ -66,6 +74,11 @@ end
     @test_throws AssertionError prunelayer(model, PruneByPercentage(4.0))
     @test_throws AssertionError prunelayer(model, PruneByPercentage(1.5))
     @test_throws AssertionError prunelayer(model, PruneByPercentage(-0.5))
+
+    @test_throws MethodError prunelayer(model, PruneByPercentage(21))
+    @test_throws MethodError prunelayer(model, PruneByPercentage(0x03))
+    @test_throws MethodError prunelayer(model, PruneByPercentage("abc"))
+    @test_throws MethodError prunelayer(model, PruneByPercentage([0.2, 1.4]))
 end
 
 @testset "quantity pruning" begin
@@ -85,6 +98,9 @@ end
     @test new_model.σ == model.σ
 
     @test_throws AssertionError prunelayer(model, PruneByQuantity(-5))
+
+    @test_throws MethodError prunelayer(model, PruneByPercentage("abc"))
+    @test_throws MethodError prunelayer(model, PruneByPercentage([0.2, 1.4]))
 end
 
 @testset "layers other than Dense" begin
