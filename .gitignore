@@ -5,6 +5,10 @@ Manifest.toml
 *.jl.cov
 *.jl.*.cov
 
+# Documentation
+docs/build
+docs/site
+
 
 # Commit message
 [Nn]otes.txt
