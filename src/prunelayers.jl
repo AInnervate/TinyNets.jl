@@ -24,13 +24,22 @@ struct PruneByQuantity{T<:Integer} <: PruningMethod
 end
 
 
-abstract type PruningSchedule end
+abstract type FineTuner end
 
-# TODO: at this moment, the methods vector may contain 
-#  PruningMethods with different sizes. not ideal.
-struct SequencePruning <: PruningSchedule
-    methods::Vector{PruningMethod}
+struct TuneByEpochs{T<:Integer} <: FineTuner
+    value::T
 end
+
+struct TuneByAbsoluteLoss{T<:Number} <: FineTuner
+    value::T
+end
+
+struct TuneByLossDifference{T<:Number} <: FineTuner
+    value::T
+end
+
+
+const PruningSchedule = Vector{<:Tuple{<:PruningMethod, <:FineTuner}}
 
 
 numofnonzerostoremove(A::SparseMatrixCSC, n::Integer)::Integer = n - (length(A) - nnz(A))
@@ -109,20 +118,4 @@ function prunelayer(layer::Dense, pm::PruneByQuantity)::Dense
     w = sparse(layer.weight)
     dropquantity!(w, pm)
     return Dense(w, layer.bias, layer.σ)
-end
-
-
-function prunelayer(layer::Any, s::PruningSchedule)::Any
-    chain = Chain(Base.Fix2.(prunelayer, s.methods))
-    chain(layer)
-end
-
-function prunelayer(layer::Chain, s::PruningSchedule)::Chain
-    chain = Chain(Base.Fix2.(prunelayer, s.methods))
-    chain(layer)
-end
-
-function prunelayer(layer::Dense, s::PruningSchedule)::Dense
-    chain = Chain(Base.Fix2.(prunelayer, s.methods))
-    chain(layer)
 end
