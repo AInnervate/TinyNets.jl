@@ -58,7 +58,7 @@ function dropquantity!(A::SparseMatrixCSC, pm::PruningMethod)::SparseMatrixCSC
 end
 
 
-function prunelayer(layer::Any, pm::PruningMethod)::Any
+function prunelayer(layer::T, pm::PruningMethod)::T where T <: Any
     @warn "Pruning not implemented for `$(Base.typename(typeof(layer)).wrapper)` layers."
     return layer
 end
@@ -85,7 +85,7 @@ function prunelayer(layer::Dense, pm::PruneRandomly)::Dense
         end
         pm = PruneRandomly(n)
     end
-    
+
     w = sparse(layer.weight)
     dropquantity!(w, pm)
     
@@ -112,7 +112,7 @@ function prunelayer(layer::Dense, pm::PruneByQuantity)::Dense
 end
 
 
-function prunelayer(layer::Any, s::PruningSchedule)::Any
+function prunelayer(layer::T, s::PruningSchedule)::T where T <: Any
     chain = Chain(Base.Fix2.(prunelayer, s.methods))
     chain(layer)
 end
