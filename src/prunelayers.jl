@@ -74,17 +74,20 @@ function prunelayer(layer::Dense, pm::PruneByIdentity)::Dense
 end
 
 # unstructured
-function prunelayer(layer::Dense, pm::PruneRandomly)::Dense
+function prunelayer(layer::Dense, pm::PruneRandomly{T})::Dense where T <: AbstractFloat
     @assert pm.value ≥ zero(pm.value)
     
-    if pm.value isa AbstractFloat
-        if pm.value ≤ one(pm.value)
-            n = round(Integer, pm.value * length(layer.weight))
-        else
-            n = round(Integer, pm.value)
-        end
-        pm = PruneRandomly(n)
+    if pm.value ≤ one(pm.value)
+        n = round(Integer, pm.value * length(layer.weight))
+    else
+        n = round(Integer, pm.value)
     end
+    
+    return prunelayer(layer, PruneRandomly(n))
+end
+
+function prunelayer(layer::Dense, pm::PruneRandomly{T})::Dense where T <: Integer
+    @assert pm.value ≥ zero(pm.value)
 
     w = sparse(layer.weight)
     dropquantity!(w, pm)
