@@ -139,11 +139,11 @@ end
 
 function finetune(strategy::TuneByEpochs, loss::Function, ps, opt::Flux.Optimise.AbstractOptimiser, data)
     # @epochs strategy.value train!(loss, ps, data, opt)
-
-    losssum = 0.0
-    numsamples = 0
-
+    
     for i ∈ 1:strategy.value
+        losssum = 0.0
+        numsamples = 0
+
         for (x, y) in data
             gs = gradient(() -> loss(x,y), ps)
             Flux.Optimise.update!(opt, ps, gs)
@@ -161,13 +161,13 @@ function finetune(strategy::TuneByAbsoluteLoss, loss::Function, ps, opt::Flux.Op
 
     maxepochs = 100
     i = 0
-
-    losssum = 0.0
-    numsamples = 0
-
+    
     lossvalue = strategy.value + one(strategy.value)
-
+    
     while (lossvalue > strategy.value) && (i < maxepochs)
+        losssum = 0.0
+        numsamples = 0
+
         for (x, y) in data
             gs = gradient(() -> loss(x,y), ps)
             Flux.Optimise.update!(opt, ps, gs)
