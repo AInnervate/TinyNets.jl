@@ -182,3 +182,32 @@ function finetune(strategy::TuneByAbsoluteLoss, loss::Function, ps, opt::Flux.Op
         println("epoch: $i - train loss: $(lossvalue)")
     end
 end
+
+function finetune(strategy::TuneByLossDifference, loss::Function, ps, opt::Flux.Optimise.AbstractOptimiser, data)
+    # @epochs strategy.value train!(loss, ps, data, opt)
+
+    maxepochs = 100
+    i = 0
+
+    lossdiff = strategy.value + one(strategy.value)
+    oldloss = 0.0
+    
+    while (lossdiff > strategy.value) && (i < maxepochs)
+        losssum = 0.0
+        numsamples = 0
+
+        for (x, y) in data
+            gs = gradient(() -> loss(x,y), ps)
+            Flux.Optimise.update!(opt, ps, gs)
+
+            losssum += loss(x, y)
+            numsamples += size(x)[end]
+        end
+
+        lossdiff = abs(oldloss - (losssum / numsamples))
+        oldloss = losssum / numsamples
+
+        i += 1
+        println("epoch: $i - train loss: $(oldloss)")
+    end
+end
