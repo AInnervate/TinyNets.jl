@@ -41,6 +41,11 @@ schedule = [
     (PruneByPercentage(0.90), TuneByAbsoluteLoss(0.01))
 ]
 
+schedule = [
+    (PruneByPercentage(0.50), TuneByLossDifference(0.001)),
+    (PruneByPercentage(0.75), TuneByLossDifference(0.001)),
+    (PruneByPercentage(0.90), TuneByLossDifference(0.001))
+]
 
 sparsemodel = scheduledpruning(model, schedule, logitcrossentropy, opt, train_loader, verbose=true)
 
