@@ -1,4 +1,5 @@
 include("src/prunelayers.jl")
+include("src/schedulepruning.jl")
 
 using Flux
 using Flux.Data: DataLoader
