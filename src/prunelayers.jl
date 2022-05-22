@@ -135,20 +135,25 @@ function scheduledpruning(model::Any, schedule::PruningSchedule, losstype::Funct
     return model
 end
 
+function trainandgetloss!(loss::Function, parameters::Any, data::Any, optimiser::Flux.Optimise.AbstractOptimiser)
+    losssum = 0.0
+    numsamples = 0
+
+    for (x, y) in data
+        gradients = gradient(() -> loss(x,y), parameters)
+        Flux.Optimise.update!(optimiser, parameters, gradients)
+
+        losssum += loss(x, y)
+        numsamples += size(x)[end]
+    end
+
+    return (losssum / numsamples)
+end
+
 function finetune(strategy::TuneByEpochs, loss::Function, parameters::Any, optimiser::Flux.Optimise.AbstractOptimiser, data::Any; verbose::Bool=false)
     for epoch ∈ 1:strategy.value
-        losssum = 0.0
-        numsamples = 0
-
-        for (x, y) in data
-            gradients = gradient(() -> loss(x,y), parameters)
-            Flux.Optimise.update!(optimiser, parameters, gradients)
-
-            losssum += loss(x, y)
-            numsamples += size(x)[end]
-        end
-
-        verbose && println("epoch: $epoch - train loss: $(losssum/numsamples)")
+        lossvalue = trainandgetloss!(loss, parameters, data, optimiser)
+        verbose && println("epoch: $epoch - train loss: $lossvalue")
     end
 end
 
@@ -158,21 +163,9 @@ function finetune(strategy::TuneByAbsoluteLoss, loss::Function, parameters::Any,
     epoch = 0
     
     while (lossvalue > strategy.value) && (epoch < maxepochs)
-        losssum = 0.0
-        numsamples = 0
-
-        for (x, y) in data
-            gradients = gradient(() -> loss(x,y), parameters)
-            Flux.Optimise.update!(optimiser, parameters, gradients)
-
-            losssum += loss(x, y)
-            numsamples += size(x)[end]
-        end
-
-        lossvalue = losssum / numsamples
+        lossvalue = trainandgetloss!(loss, parameters, data, optimiser)
 
         epoch += 1
-
         verbose && println("epoch: $epoch - train loss: $(lossvalue)")
     end
 end
@@ -184,22 +177,12 @@ function finetune(strategy::TuneByLossDifference, loss::Function, parameters::An
     epoch = 0
     
     while (lossdiff > strategy.value) && (epoch < maxepochs)
-        losssum = 0.0
-        numsamples = 0
-
-        for (x, y) in data
-            gradients = gradient(() -> loss(x,y), parameters)
-            Flux.Optimise.update!(optimiser, parameters, gradients)
-
-            losssum += loss(x, y)
-            numsamples += size(x)[end]
-        end
-
-        lossdiff = abs(oldloss - (losssum / numsamples))
-        oldloss = losssum / numsamples
+        lossvalue = trainandgetloss!(loss, parameters,data, optimiser)
+        
+        lossdiff = abs(oldloss - lossvalue)
+        oldloss = lossvalue
 
         epoch += 1
-
         verbose && println("epoch: $epoch - train loss: $(oldloss)")
     end
 end
