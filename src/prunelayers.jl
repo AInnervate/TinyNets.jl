@@ -39,26 +39,15 @@ struct TuneByLossDifference{T<:Number} <: FineTuner
 end
 
 
-numofnonzerostoremove(A::SparseMatrixCSC, n::Integer)::Integer = n - (length(A) - nnz(A))
-
-getelementindexes(A, n, pm::PruneRandomly) = shuffle(eachindex(A.nzval))[1:n]
-getelementindexes(A, n, pm::PruneByQuantity) = partialsortperm(A.nzval, 1:n, by=abs)
-
-
 # TODO: if A contain zeros, the end result could be undesired, since some
 #  zeros may remain and will be erased after dropzeros call
-# TODO: check which is faster (1) dropzeros!(A) followed by nnz(A) or 
-#  (2) count(!iszero, A)
-function dropquantity!(A::SparseMatrixCSC, pm::PruningMethod)::SparseMatrixCSC
-    @assert pm.value isa Integer
-    @assert pm.value ≥ zero(pm.value)
+function dropquantity!(A::SparseMatrixCSC, value::Integer, f::Function)::SparseMatrixCSC
+    @assert value ≥ zero(value)
 
-    nzr = numofnonzerostoremove(A, pm.value)
+    S = shuffle(eachindex(A))
 
-    if nzr > 0
-        @views idx = getelementindexes(A, nzr, pm)
-        A.nzval[idx] .= 0
-    end
+    idx = partialsortperm(vec(S), 1:value, by=f)
+    A[S[idx]] .= 0
 
     return dropzeros!(A)
 end
@@ -80,20 +69,23 @@ function prunelayer(layer::Dense, pm::PruneByIdentity)::Dense
 end
 
 # unstructured
-function prunelayer(layer::Dense, pm::PruneRandomly)::Dense
+function prunelayer(layer::Dense, pm::PruneRandomly{T})::Dense where T <: AbstractFloat
     @assert pm.value ≥ zero(pm.value)
     
-    if pm.value isa AbstractFloat
-        if pm.value ≤ one(pm.value)
-            n = round(Integer, pm.value * length(layer.weight))
-        else
-            n = round(Integer, pm.value)
-        end
-        pm = PruneRandomly(n)
+    if pm.value ≤ one(pm.value)
+        n = round(Integer, pm.value * length(layer.weight))
+    else
+        n = round(Integer, pm.value)
     end
     
+    return prunelayer(layer, PruneRandomly(n))
+end
+
+function prunelayer(layer::Dense, pm::PruneRandomly{T})::Dense where T <: Integer
+    @assert pm.value ≥ zero(pm.value)
+
     w = sparse(layer.weight)
-    dropquantity!(w, pm)
+    dropquantity!(w, pm.value, zero)
     
     return Dense(w, layer.bias, layer.σ)
 end
@@ -113,6 +105,6 @@ end
 
 function prunelayer(layer::Dense, pm::PruneByQuantity)::Dense
     w = sparse(layer.weight)
-    dropquantity!(w, pm)
+    dropquantity!(w, pm.value, i->abs(w[i]))
     return Dense(w, layer.bias, layer.σ)
 end
