@@ -24,21 +24,6 @@ struct PruneByQuantity{T<:Integer} <: PruningMethod
 end
 
 
-abstract type FineTuner end
-
-struct TuneByEpochs{T<:Integer} <: FineTuner
-    value::T
-end
-
-struct TuneByAbsoluteLoss{T<:Number} <: FineTuner
-    value::T
-end
-
-struct TuneByLossDifference{T<:Number} <: FineTuner
-    value::T
-end
-
-
 # TODO: if A contain zeros, the end result could be undesired, since some
 #  zeros may remain and will be erased after dropzeros call
 function dropquantity!(A::SparseMatrixCSC, value::Integer, f::Function)::SparseMatrixCSC

@@ -3,6 +3,21 @@ using Flux
 include("prunelayers.jl")
 
 
+abstract type FineTuner end
+
+struct TuneByEpochs{T<:Integer} <: FineTuner
+    value::T
+end
+
+struct TuneByAbsoluteLoss{T<:Number} <: FineTuner
+    value::T
+end
+
+struct TuneByLossDifference{T<:Number} <: FineTuner
+    value::T
+end
+
+
 const PruningSchedule = Vector{<:Tuple{<:PruningMethod, <:FineTuner}}
 
 function scheduledpruning(model::Any, schedule::PruningSchedule, losstype::Function, optimiser::Flux.Optimise.AbstractOptimiser, data::Any; verbose::Bool=false)
