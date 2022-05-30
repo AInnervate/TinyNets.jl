@@ -103,6 +103,38 @@ end
     @test_throws MethodError prunelayer(model, PruneByPercentage([0.2, 1.4]))
 end
 
+@testset "pruning by comparator" begin
+    W = [[-0.1, 0.2, -0.3] [0.0, -0.5, 0.06] [-0.7, 0.08, 0.0] [0.0, -0.11, 0.12]]
+    model = Dense(W)
+
+    # prune by min values
+    W2 = sparse([[0.0, 0.2, 0.0] [0.0, 0.0, 0.06] [0.0, 0.08, 0.0] [0.0, 0.0, 0.12]])
+    
+    new_model = prunelayer(model, PruneByPercentage(0.4), by=identity)
+    @test new_model.weight == W2
+    @test new_model.bias == model.bias
+    @test new_model.σ == model.σ
+
+    new_model = prunelayer(model, PruneByQuantity(5), by=identity)
+    @test new_model.weight == W2
+    @test new_model.bias == model.bias
+    @test new_model.σ == model.σ
+
+    # "custom" function to prune by max values
+    W2 = sparse([[-0.1, 0.0, -0.3] [0.0, -0.5, 0.0] [-0.7, 0.0, 0.0] [0.0, -0.11, 0.0]])
+    neg(x) = -x
+
+    new_model = prunelayer(model, PruneByPercentage(0.4), by=neg)
+    @test new_model.weight == W2
+    @test new_model.bias == model.bias
+    @test new_model.σ == model.σ
+
+    new_model = prunelayer(model, PruneByQuantity(5), by=neg)
+    @test new_model.weight == W2
+    @test new_model.bias == model.bias
+    @test new_model.σ == model.σ
+end
+
 @testset "layers other than Dense" begin
     @test_nowarn prunelayer(Dense(2, 2), PruneByIdentity())
     @test_nowarn prunelayer(Chain(Dense(10 => 5), Dense(5 => 2)), PruneByIdentity())

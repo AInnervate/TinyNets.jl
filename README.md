@@ -25,10 +25,13 @@ A working example, training a model in the MNIST dataset, can be found in the [e
 
 ### Pruning
 
-- Random pruning by percentage
-- Random pruning by quantity
-- Magnitude pruning by percentage
-- Magnitude pruning by quantity
+- Percentage of randomly chosen weights
+- Quantity of randomly chosen weights
+- All weights within a given magnitude
+- Percentage of the weights with the smallest magnitude
+- Quantity of the weights with the smallest magnitude
+- Percentage of the weights according to a given sensitivity function
+- Quantity of the weights according to a given sensitivity function
 
 ### Iterative Schedules
 

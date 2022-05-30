@@ -24,8 +24,10 @@ struct PruneByQuantity{T<:Integer} <: PruningMethod
 end
 
 
-# TODO: if A contain zeros, the end result could be undesired, since some
-#  zeros may remain and will be erased after dropzeros call
+# TODO: if A contain more zeros than the number to remove or if the user passes
+#  a custom function, the end result could be more sparse than intended, since
+#  some zeros may remain and will be erased after the dropzeros call.
+#  Is this the desired behavior?
 function dropquantity!(A::SparseMatrixCSC, value::Integer, f::Function)::SparseMatrixCSC
     @assert value ≥ zero(value)
 
@@ -81,15 +83,15 @@ function prunelayer(layer::Dense, pm::PruneByMagnitude)::Dense
     return Dense(w, layer.bias, layer.σ)
 end
 
-function prunelayer(layer::Dense, pm::PruneByPercentage)::Dense
+function prunelayer(layer::Dense, pm::PruneByPercentage; by::Function=abs)::Dense
     @assert zero(pm.value) ≤ pm.value ≤ one(pm.value)
     
     n = round(Integer, pm.value * length(layer.weight))
-    return prunelayer(layer, PruneByQuantity(n))
+    return prunelayer(layer, PruneByQuantity(n), by=by)
 end
 
-function prunelayer(layer::Dense, pm::PruneByQuantity)::Dense
+function prunelayer(layer::Dense, pm::PruneByQuantity; by::Function=abs)::Dense
     w = sparse(layer.weight)
-    dropquantity!(w, pm.value, i->abs(w[i]))
+    dropquantity!(w, pm.value, i->by(w[i]))
     return Dense(w, layer.bias, layer.σ)
 end
