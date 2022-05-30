@@ -24,6 +24,10 @@ struct PruneByQuantity{T<:Integer} <: PruningMethod
 end
 
 
+nnz(model) = sum(x->count(≉(0), x), Flux.params(model))
+countparams(model) = sum(length, Flux.params(model))
+sparsity(model) = 1.0 - nnz(model)/countparams(model)
+
 # TODO: if A contain more zeros than the number to remove or if the user passes
 #  a custom function, the end result could be more sparse than intended, since
 #  some zeros may remain and will be erased after the dropzeros call.

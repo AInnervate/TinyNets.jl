@@ -23,8 +23,12 @@ const PruningSchedule = Vector{<:Tuple{<:PruningMethod, <:FineTuner}}
 function scheduledpruning(model::Any, schedule::PruningSchedule, losstype::Function, optimiser::Flux.Optimise.AbstractOptimiser, data::Any; verbose::Bool=false)
     for (pruningmethod, strategy) ∈ schedule
         verbose && println("Applying ", typeof(pruningmethod))
+        verbose && println("Old sparsity: ", sparsity(model))
         
         model = prunelayer(model, pruningmethod)
+        
+        verbose && println("Current sparsity: ", sparsity(model))
+
         parameters = Flux.params(model)
         
         loss(x, y) = losstype(model(x), y)
