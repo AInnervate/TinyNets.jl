@@ -1,4 +1,5 @@
 using Flux
+using Statistics
 
 include("prunelayers.jl")
 
@@ -14,6 +15,9 @@ struct TuneByAbsoluteLoss{T<:Number} <: FineTuner
 end
 
 struct TuneByLossDifference{T<:Number} <: FineTuner
+    value::T
+end
+struct TuneByAcDifference{T<:Number} <: FineTuner
     value::T
 end
 
@@ -73,7 +77,6 @@ function finetune(strategy::TuneByAbsoluteLoss, loss::Function, parameters::Any,
         verbose && println("epoch: $epoch - train loss: $(lossvalue)")
     end
 end
-
 function finetune(strategy::TuneByLossDifference, loss::Function, parameters::Any, optimiser::Flux.Optimise.AbstractOptimiser, data::Any; maxepochs::Integer=100, verbose::Bool=false)
     lossdiff = strategy.value + one(strategy.value)
 
@@ -88,5 +91,24 @@ function finetune(strategy::TuneByLossDifference, loss::Function, parameters::An
 
         epoch += 1
         verbose && println("epoch: $epoch - train loss: $(oldloss)")
+    end
+end
+
+function finetune(strategy::TuneByAcDifference, loss::Function, parameters::Any, optimiser::Flux.Optimise.AbstractOptimiser, data::Any; maxepochs::Integer=100, verbose::Bool=false)
+    
+    acdiff = strategy.value + one(strategy.value)
+
+    oldac = 1.0
+    epoch = 0
+    
+    while (acdiff > strategy.value) && (epoch < maxepochs)
+        train!(loss, parameters,data, optimiser)
+        acvalue=mean([accuracy(x,y) for (x,y) in train_loader])
+        
+        acdiff = abs(oldac - acvalue)
+        oldac = acvalue
+
+        epoch += 1
+        verbose && println("epoch: $epoch - train accuracy: $(oldac)")
     end
 end
