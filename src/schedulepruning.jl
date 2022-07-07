@@ -37,7 +37,7 @@ function scheduledpruning(model::Any, schedule::PruningSchedule, losstype::Funct
 
         loss(x, y) = losstype(model(x), y)
 
-        finetune(strategy, loss, parameters, optimiser, data, verbose=verbose)
+        finetune(model, strategy, loss, parameters, optimiser, data, verbose=verbose)
     end
 
     return model
@@ -101,29 +101,34 @@ function trainandgetlossandaccuracy!(loss::Function, parameters::Any, data::Any,
 end
 
 
-function finetune(strategy::TuneByEpochs, loss::Function, parameters::Any, optimiser::Flux.Optimise.AbstractOptimiser, data::Any; verbose::Bool=false)
+function finetune(model::Any, strategy::TuneByEpochs, loss::Function, parameters::Any, optimiser::Flux.Optimise.AbstractOptimiser, data::Any; verbose::Bool=false)
     for epoch ∈ 1:strategy.value
         train!(loss, parameters, data, optimiser)
+
         lossvalue = datasetloss(data, loss)
+        accuracyvalue = datasetaccuracy(data, model)
+
         verbose && println("epoch: $epoch - train loss: $lossvalue")
     end
 end
 
-function finetune(strategy::TuneByAbsoluteLoss, loss::Function, parameters::Any, optimiser::Flux.Optimise.AbstractOptimiser, data::Any; maxepochs::Integer=100, verbose::Bool=false)
+function finetune(model::Any, strategy::TuneByAbsoluteLoss, loss::Function, parameters::Any, optimiser::Flux.Optimise.AbstractOptimiser, data::Any; maxepochs::Integer=100, verbose::Bool=false)
     lossvalue = strategy.value + one(strategy.value)
 
     epoch = 0
 
     while (lossvalue > strategy.value) && (epoch < maxepochs)
         train!(loss, parameters, data, optimiser)
+
         lossvalue = datasetloss(data, loss)
+        accuracyvalue = datasetaccuracy(data, model)
 
         epoch += 1
         verbose && println("epoch: $epoch - train loss: $(lossvalue)")
     end
 end
 
-function finetune(strategy::TuneByLossDifference, loss::Function, parameters::Any, optimiser::Flux.Optimise.AbstractOptimiser, data::Any; maxepochs::Integer=100, verbose::Bool=false)
+function finetune(model::Any, strategy::TuneByLossDifference, loss::Function, parameters::Any, optimiser::Flux.Optimise.AbstractOptimiser, data::Any; maxepochs::Integer=100, verbose::Bool=false)
     lossdiff = strategy.value + one(strategy.value)
 
     oldloss = 0.0
@@ -131,7 +136,9 @@ function finetune(strategy::TuneByLossDifference, loss::Function, parameters::An
 
     while (lossdiff > strategy.value) && (epoch < maxepochs)
         train!(loss, parameters, data, optimiser)
+
         lossvalue = datasetloss(data, loss)
+        accuracyvalue = datasetaccuracy(data, model)
 
         lossdiff = abs(oldloss - lossvalue)
         oldloss = lossvalue
@@ -141,14 +148,17 @@ function finetune(strategy::TuneByLossDifference, loss::Function, parameters::An
     end
 end
 
-function finetune(strategy::TuneByAccuracyDifference, loss::Function, parameters::Any, optimiser::Flux.Optimise.AbstractOptimiser, data::Any; maxepochs::Integer=100, verbose::Bool=false)
+function finetune(model::Any, strategy::TuneByAccuracyDifference, loss::Function, parameters::Any, optimiser::Flux.Optimise.AbstractOptimiser, data::Any; maxepochs::Integer=100, verbose::Bool=false)
     accuracydiff = strategy.value + one(strategy.value)
 
     oldaccuracy = 0.0
     epoch = 0
 
     while (accuracydiff > strategy.value) && (epoch < maxepochs)
-        lossvalue, accuracyvalue = trainandgetlossandaccuracy!(loss, parameters,data, optimiser)
+        train!(loss, parameters, data, optimiser)
+
+        lossvalue = datasetloss(data, loss)
+        accuracyvalue = datasetaccuracy(data, model)
 
         accuracydiff = accuracyvalue - oldaccuracy
         oldaccuracy = accuracyvalue
