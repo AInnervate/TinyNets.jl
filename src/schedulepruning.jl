@@ -43,6 +43,7 @@ function scheduledpruning(model::Any, schedule::PruningSchedule, losstype::Funct
     return model
 end
 
+
 function datasetloss(data::Any, loss::Function)
     losssum = 0.0
     numsamples = 0
@@ -53,6 +54,18 @@ function datasetloss(data::Any, loss::Function)
     end
 
     return (losssum / numsamples)
+end
+
+function datasetaccuracy(data::Any, model::Any)
+    accuracysum = 0.0
+    numsamples = 0
+
+    for (x, y) in data
+        accuracysum += sum(Flux.onecold(model(x)) .== Flux.onecold(y))
+        numsamples += size(x)[end]
+    end
+
+    return (accuracysum / numsamples)
 end
 
 function trainandgetloss!(loss::Function, parameters::Any, data::Any, optimiser::Flux.Optimise.AbstractOptimiser)
@@ -86,6 +99,7 @@ function trainandgetlossandaccuracy!(loss::Function, parameters::Any, data::Any,
 
     return (losssum / numsamples), (accuracysum / numsamples)
 end
+
 
 function finetune(strategy::TuneByEpochs, loss::Function, parameters::Any, optimiser::Flux.Optimise.AbstractOptimiser, data::Any; verbose::Bool=false)
     for epoch ∈ 1:strategy.value
