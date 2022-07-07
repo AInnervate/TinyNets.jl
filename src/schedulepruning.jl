@@ -89,7 +89,8 @@ end
 
 function finetune(strategy::TuneByEpochs, loss::Function, parameters::Any, optimiser::Flux.Optimise.AbstractOptimiser, data::Any; verbose::Bool=false)
     for epoch ∈ 1:strategy.value
-        lossvalue = trainandgetloss!(loss, parameters, data, optimiser)
+        train!(loss, parameters, data, optimiser)
+        lossvalue = datasetloss(data, loss)
         verbose && println("epoch: $epoch - train loss: $lossvalue")
     end
 end
@@ -100,7 +101,8 @@ function finetune(strategy::TuneByAbsoluteLoss, loss::Function, parameters::Any,
     epoch = 0
 
     while (lossvalue > strategy.value) && (epoch < maxepochs)
-        lossvalue = trainandgetloss!(loss, parameters, data, optimiser)
+        train!(loss, parameters, data, optimiser)
+        lossvalue = datasetloss(data, loss)
 
         epoch += 1
         verbose && println("epoch: $epoch - train loss: $(lossvalue)")
@@ -114,7 +116,8 @@ function finetune(strategy::TuneByLossDifference, loss::Function, parameters::An
     epoch = 0
 
     while (lossdiff > strategy.value) && (epoch < maxepochs)
-        lossvalue = trainandgetloss!(loss, parameters,data, optimiser)
+        train!(loss, parameters, data, optimiser)
+        lossvalue = datasetloss(data, loss)
 
         lossdiff = abs(oldloss - lossvalue)
         oldloss = lossvalue
