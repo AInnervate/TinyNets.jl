@@ -154,7 +154,7 @@ end
 function finetune(model::Any, strategy::TuneByAccuracyDifference, loss::Function, parameters::Any, optimiser::Flux.Optimise.AbstractOptimiser, data::Any; maxepochs::Integer=100, verbose::Bool=false)
     accuracydiff = strategy.value + one(strategy.value)
 
-    oldaccuracy = 0.0
+    maxaccuracy = 0.0
     epoch = 0
 
     while (accuracydiff > strategy.value) && (epoch < maxepochs)
@@ -163,8 +163,8 @@ function finetune(model::Any, strategy::TuneByAccuracyDifference, loss::Function
         lossvalue = datasetloss(data, loss)
         accuracyvalue = datasetaccuracy(data, model)
 
-        accuracydiff = accuracyvalue - oldaccuracy
-        oldaccuracy = accuracyvalue
+        accuracydiff = accuracyvalue - maxaccuracy
+        maxaccuracy = max(maxaccuracy, accuracyvalue)
 
         epoch += 1
         verbose && prettyprint(epoch, lossvalue, accuracyvalue)
