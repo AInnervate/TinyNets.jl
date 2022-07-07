@@ -43,6 +43,18 @@ function scheduledpruning(model::Any, schedule::PruningSchedule, losstype::Funct
     return model
 end
 
+function datasetloss(data::Any, loss::Function)
+    losssum = 0.0
+    numsamples = 0
+
+    for (x, y) in data
+        losssum += loss(x, y)
+        numsamples += size(x)[end]
+    end
+
+    return (losssum / numsamples)
+end
+
 function trainandgetloss!(loss::Function, parameters::Any, data::Any, optimiser::Flux.Optimise.AbstractOptimiser)
     losssum = 0.0
     numsamples = 0
