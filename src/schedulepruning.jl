@@ -1,5 +1,6 @@
 using Flux
 using Statistics
+using Printf
 
 include("prunelayers.jl")
 
@@ -26,12 +27,12 @@ const PruningSchedule = Vector{<:Tuple{<:PruningMethod, <:FineTuner}}
 
 function scheduledpruning(model::Any, schedule::PruningSchedule, losstype::Function, optimiser::Flux.Optimise.AbstractOptimiser, data::Any; verbose::Bool=false)
     for (pruningmethod, strategy) ∈ schedule
-        verbose && println("Applying ", typeof(pruningmethod))
-        verbose && println("Old sparsity: ", sparsity(model))
+        verbose && @printf "Applying %s\n" typeof(pruningmethod)
+        verbose && @printf "Old sparsity: %.3f %%\n" (100 * sparsity(model))
 
         model = prunelayer(model, pruningmethod)
 
-        verbose && println("Current sparsity: ", sparsity(model))
+        verbose && @printf "Current sparsity: %.3f %%\n" (100 * sparsity(model))
 
         parameters = Flux.params(model)
 
@@ -43,6 +44,8 @@ function scheduledpruning(model::Any, schedule::PruningSchedule, losstype::Funct
     return model
 end
 
+
+prettyprint(epoch, loss, accuracy) = @printf "epoch: %d - train loss: %.6f - train accuracy: %.5f\n" epoch loss accuracy
 
 function datasetloss(data::Any, loss::Function)
     losssum = 0.0
@@ -108,7 +111,7 @@ function finetune(model::Any, strategy::TuneByEpochs, loss::Function, parameters
         lossvalue = datasetloss(data, loss)
         accuracyvalue = datasetaccuracy(data, model)
 
-        verbose && println("epoch: $epoch - train loss: $lossvalue")
+        verbose && prettyprint(epoch, lossvalue, accuracyvalue)
     end
 end
 
@@ -124,7 +127,7 @@ function finetune(model::Any, strategy::TuneByAbsoluteLoss, loss::Function, para
         accuracyvalue = datasetaccuracy(data, model)
 
         epoch += 1
-        verbose && println("epoch: $epoch - train loss: $(lossvalue)")
+        verbose && prettyprint(epoch, lossvalue, accuracyvalue)
     end
 end
 
@@ -144,7 +147,7 @@ function finetune(model::Any, strategy::TuneByLossDifference, loss::Function, pa
         oldloss = lossvalue
 
         epoch += 1
-        verbose && println("epoch: $epoch - train loss: $(oldloss)")
+        verbose && prettyprint(epoch, lossvalue, accuracyvalue)
     end
 end
 
@@ -164,6 +167,6 @@ function finetune(model::Any, strategy::TuneByAccuracyDifference, loss::Function
         oldaccuracy = accuracyvalue
 
         epoch += 1
-        verbose && println("epoch: $epoch - train accuracy: $(accuracyvalue) - train loss: $(lossvalue)")
+        verbose && prettyprint(epoch, lossvalue, accuracyvalue)
     end
 end
