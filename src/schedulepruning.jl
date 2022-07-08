@@ -1,4 +1,5 @@
 using Flux
+using Flux: @epochs, train!, early_stopping
 using Statistics
 using Printf
 
@@ -20,6 +21,8 @@ struct TuneByLossDifference{T<:Number} <: FineTuner
 end
 struct TuneByAccuracyDifference{T<:Number} <: FineTuner
     value::T
+end
+struct TuneToConvergence{} <: FineTuner
 end
 
 
@@ -168,5 +171,20 @@ function finetune(model::Any, strategy::TuneByAccuracyDifference, loss::Function
 
         epoch += 1
         verbose && prettyprint(epoch, lossvalue, accuracyvalue)
+    end
+end
+
+function finetune(model::Any,strategy::TuneToConvergence, loss::Function, parameters::Any, optimiser::Flux.Optimise.AbstractOptimiser, data::Any; maxepochs::Integer=100, verbose::Bool=false)
+
+    #separating data
+    train, test = splitobs(shuffleobs(data.data), at = 0.1)
+    train_loader=DataLoader(train)
+    test_loss()=loss(test[1], test[2])
+    es = early_stopping(test_loss, 2; init_score = 100)
+    @epochs 5 begin
+        train!(loss, Flux.params(model), train_loader, optimiser)
+        test_loss=loss(test[1], test[2])
+        println("test loss: $test_loss")
+        es() && break
     end
 end
