@@ -174,17 +174,18 @@ function finetune(model::Any, strategy::TuneByAccuracyDifference, loss::Function
     end
 end
 
+
 function finetune(model::Any,strategy::TuneToConvergence, loss::Function, parameters::Any, optimiser::Flux.Optimise.AbstractOptimiser, data::Any; maxepochs::Integer=100, verbose::Bool=false)
 
     #separating data
-    train, test = splitobs(shuffleobs(data.data), at = 0.1)
-    train_loader=DataLoader(train)
+    train, test = splitobs(shuffleobs(data.data), at = 0.5)
+    train_loader=DataLoader(train, batchsize=256)
     test_loss()=loss(test[1], test[2])
     es = early_stopping(test_loss, 2; init_score = 100)
-    @epochs 5 begin
+    @epochs maxepochs begin
         train!(loss, parameters, train_loader, optimiser)
-        test_loss=loss(test[1], test[2])
-        println("test loss: $test_loss")
+        l=loss(test[1], test[2])
+        println("test loss: $l")
         es() && break
     end
 end
