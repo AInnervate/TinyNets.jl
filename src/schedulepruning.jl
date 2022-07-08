@@ -182,7 +182,7 @@ function finetune(model::Any,strategy::TuneToConvergence, loss::Function, parame
     test_loss()=loss(test[1], test[2])
     es = early_stopping(test_loss, 2; init_score = 100)
     @epochs 5 begin
-        train!(loss, Flux.params(model), train_loader, optimiser)
+        train!(loss, parameters, train_loader, optimiser)
         test_loss=loss(test[1], test[2])
         println("test loss: $test_loss")
         es() && break
