@@ -3,7 +3,7 @@ include("../src/schedulepruning.jl")
 
 using Flux
 using Flux.Data: DataLoader
-using Flux: @epochs, train!, onehotbatch
+using Flux: train!, onehotbatch
 using Flux.Losses: logitcrossentropy
 using MLDatasets
 
@@ -19,7 +19,10 @@ model = Chain(Dense(784, 32, relu, init=rand), Dense(32, 10, init=rand))
 loss(x, y) = logitcrossentropy(model(x), y)
 opt = ADAM(3e-4)
 
-@epochs 20 train!(loss, Flux.params(model), train_loader, opt)
+for epoch ∈ 1:20
+    train!(loss, Flux.params(model), train_loader, opt)
+    @info "Epoch $epoch - loss: $(loss(x_train, y_train))"
+end
 
 
 schedule = [
