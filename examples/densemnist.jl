@@ -8,7 +8,7 @@ using Flux.Losses: logitcrossentropy
 using MLDatasets
 
 
-x_train, y_train = MLDatasets.MNIST.traindata(Float32)
+x_train, y_train = MLDatasets.MNIST(Float32, split=:train)[:]
 x_train = Flux.flatten(x_train)
 y_train = onehotbatch(y_train, 0:9)
 train_loader = DataLoader((x_train, y_train), batchsize=256, shuffle=true)
