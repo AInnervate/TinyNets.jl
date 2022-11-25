@@ -1,5 +1,5 @@
 using Flux
-using Flux: @epochs, train!, early_stopping
+using Flux: train!, early_stopping
 using Statistics
 using Printf
 
@@ -175,17 +175,16 @@ function finetune(model::Any, strategy::TuneByAccuracyDifference, loss::Function
 end
 
 
-function finetune(model::Any,strategy::TuneToConvergence, loss::Function, parameters::Any, optimiser::Flux.Optimise.AbstractOptimiser, data::Any; maxepochs::Integer=100, verbose::Bool=false)
-
-    #separating data
+function finetune(model::Any, strategy::TuneToConvergence, loss::Function, parameters::Any, optimiser::Flux.Optimise.AbstractOptimiser, data::Any; maxepochs::Integer=100, verbose::Bool=false)
+    # Separating dataset
     train, test = splitobs(shuffleobs(data.data), at = 0.5)
-    train_loader=DataLoader(train, batchsize=256)
-    test_loss()=loss(test[1], test[2])
+    train_loader = DataLoader(train, batchsize = 256)
+    test_loss() = loss(test[1], test[2])
     es = early_stopping(test_loss, 2; init_score = 100)
-    @epochs maxepochs begin
+    for epoch ∈ 1:maxepochs
         train!(loss, parameters, train_loader, optimiser)
-        l=loss(test[1], test[2])
-        println("test loss: $l")
+        l = loss(test[1], test[2])
+        @info "Epoch $epoch - test loss: $l"
         es() && break
     end
 end
