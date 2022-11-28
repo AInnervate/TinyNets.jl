@@ -18,35 +18,45 @@ function traintoconvergence!(
     batch_size = 128,
     max_epochs = 100,
     patience = 3,
+    validation_proportion = 0.1,
 )
-    train_loader = DataLoader(train_data, batchsize=batch_size, shuffle=true)
+    x_data, y_data = train_data
+    # Split the data into training and validation sets
+    # NOTE: No shuffling is performed! Preshuffled data is assumed.
+    n_samples = x_data |> size |> last
+    n_val = round(Int, n_samples * validation_proportion)
+    n_train = n_samples - n_val
+    x_train, y_train = selectdim(x_data, ndims(x_data), 1:n_train), selectdim(y_data, ndims(y_data), 1:n_train)
+    x_val, y_val = selectdim(x_data, ndims(x_data), n_train+1:n_samples), selectdim(y_data, ndims(y_data), n_train+1:n_samples)
+
+    train_loader = DataLoader((x_train, y_train), batchsize=batch_size, shuffle=false)
 
     loss′(x, y) = loss(model(x), y)
-    loss_current = loss′(x_train, y_train)
+    valloss_current = loss′(x_val, y_val)
 
-    loss_best = loss_current
+    valloss_best = valloss_current
     model_best = deepcopy(model)
 
-    trigger_noimprovement = Flux.early_stopping(identity, patience; init_score=loss_best)
+    trigger_noimprovement = Flux.early_stopping(identity, patience; init_score=valloss_best)
 
     for epoch ∈ 1:max_epochs
         train!(loss′, Flux.params(model), train_loader, optimizer)
 
-        loss_current = loss′(x_train, y_train)
+        valloss_current = loss′(x_val, y_val)
 
-        @info "Epoch $epoch - loss: $loss_current"
+        @info "Epoch $epoch - validation loss: $valloss_current"
 
-        if loss_current < loss_best
-            loss_best = loss_current
+        if valloss_current < valloss_best
+            valloss_best = valloss_current
             model_best = loadmodel!(model_best, model)
         end
-        if trigger_noimprovement(loss_current)
+        if trigger_noimprovement(valloss_current)
             @info "No improvement for $patience epochs. Stopping early."
             break
         end
     end
 
-    @info "Best loss: $loss_best\n"
+    @info "Best validation loss: $valloss_best\n"
     return loadmodel!(model, model_best)
 end
 
