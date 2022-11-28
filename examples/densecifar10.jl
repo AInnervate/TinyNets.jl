@@ -3,7 +3,7 @@ include("../src/schedulepruning.jl")
 
 using Flux
 using Flux.Data: DataLoader
-using Flux: train!, onehotbatch
+using Flux: train!, onehotbatch, loadmodel!
 using Flux.Losses: logitcrossentropy
 using MLDatasets
 using Random: seed!
@@ -23,7 +23,10 @@ function traintoconvergence!(
     loss′(x, y) = loss(model(x), y)
     loss_current = loss′(x_train, y_train)
 
-    trigger_noimprovement = Flux.early_stopping(identity, patience; init_score=loss_current)
+    loss_best = loss_current
+    model_best = deepcopy(model)
+
+    trigger_noimprovement = Flux.early_stopping(identity, patience; init_score=loss_best)
 
     for epoch ∈ 1:max_epochs
         train!(loss′, Flux.params(model), train_loader, optimizer)
@@ -32,13 +35,17 @@ function traintoconvergence!(
 
         @info "Epoch $epoch - loss: $loss_current"
 
+        if loss_current < loss_best
+            loss_best = loss_current
+            model_best = loadmodel!(model_best, model)
+        end
         if trigger_noimprovement(loss_current)
             @info "No improvement for $patience epochs. Stopping early."
             break
         end
     end
 
-    return model
+    return loadmodel!(model, model_best)
 end
 
 
@@ -49,7 +56,6 @@ y_train = onehotbatch(y_train, 0:9)
 model = Chain(Dense(784, 32, relu, init=rand), Dense(32, 10, init=rand))
 
 traintoconvergence!(model, optimizer=ADAM(3e-4), train_data=(x_train, y_train), loss=logitcrossentropy)
-
 
 schedule = [
     (PruneByPercentage(0.50), TuneByLossDifference(0.001)),
