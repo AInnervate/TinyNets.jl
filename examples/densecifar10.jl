@@ -57,7 +57,7 @@ y_train = onehotbatch(y_train, 0:9)
 
 model = Chain(Dense(784, 32, relu, init=rand), Dense(32, 10, init=rand))
 
-traintoconvergence!(model, optimizer=ADAM(3e-4), train_data=(x_train, y_train), loss=logitcrossentropy)
+traintoconvergence!(model, optimizer=ADAM(3e-4), train_data=(x_train, y_train), loss=logitcrossentropy, patience=3)
 
 schedule = [
     (PruneByPercentage(0.50), TuneByLossDifference(0.001)),
