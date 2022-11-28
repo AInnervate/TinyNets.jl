@@ -64,7 +64,7 @@ end
 accuracy(model, x, y) = sum(onecold(cpu(model(x))) .== onecold(cpu(y))) / size(x)[end]
 
 
-@timev begin
+function main()
     data_train = MLDatasets.MNIST(Float32, split=:train)
     x_train, y_train = data_train[:]
     x_train = Flux.flatten(x_train)
@@ -103,3 +103,5 @@ accuracy(model, x, y) = sum(onecold(cpu(model(x))) .== onecold(cpu(y))) / size(x
         Δloss_train=(logitcrossentropy(model(x_train), y_train) - logitcrossentropy(sparsemodel(x_train), y_train)),
     )
 end
+
+@timev main()
