@@ -3,7 +3,7 @@ include("../src/schedulepruning.jl")
 
 using Flux
 using Flux.Data: DataLoader
-using Flux: train!, onehotbatch, loadmodel!
+using Flux: train!, loadmodel!, onehotbatch, onecold
 using Flux.Losses: logitcrossentropy
 using MLDatasets
 using Random
@@ -61,6 +61,8 @@ function traintoconvergence!(
     return model
 end
 
+accuracy(model, x, y) = sum(onecold(cpu(model(x))) .== onecold(cpu(y))) / size(x)[end]
+
 
 @timev begin
     train_data = MLDatasets.MNIST(Float32, split=:train)
@@ -76,6 +78,7 @@ end
     model = Chain(Dense(784, 32, relu, init=rand), Dense(32, 10, init=rand))
 
     traintoconvergence!(model, optimizer=ADAM(3e-4), train_data=(x_train, y_train), loss=logitcrossentropy, max_epochs=2, patience=2)
+    @info "Accuracy:" train=accuracy(model, x_train, y_train)
 
     println()
     @info "Pruning..."
@@ -84,7 +87,12 @@ end
         @info "Sparsity:" current=sparsity(sparsemodel) target=target_sparsity
         sparsemodel = prunelayer(model, PruneByPercentage(target_sparsity))
         traintoconvergence!(sparsemodel, optimizer=ADAM(3e-4), train_data=(x_train, y_train), loss=logitcrossentropy, max_epochs=2, patience=2)
+        @info "Accuracy:" train=accuracy(sparsemodel, x_train, y_train)
     end
 
-    @info "End results:" Δloss=(logitcrossentropy(model(x_train), y_train) - logitcrossentropy(sparsemodel(x_train), y_train)) sparsity=sparsity(sparsemodel)
+    @info("End results:",
+        sparsity=sparsity(sparsemodel),
+        Δaccuracy=accuracy(model, x_train, y_train) - accuracy(sparsemodel, x_train, y_train),
+        Δloss=(logitcrossentropy(model(x_train), y_train) - logitcrossentropy(sparsemodel(x_train), y_train)),
+    )
 end
