@@ -10,29 +10,45 @@ using Random: seed!
 seed!(0x35c88aa0a17d0e83)
 
 
+function traintoconvergence!(
+    model;
+    optimizer,
+    train_data,
+    loss,
+    max_epochs = 100,
+    patience = 3,
+)
+    train_loader = DataLoader(train_data, batchsize=256, shuffle=true)
+
+    loss′(x, y) = loss(model(x), y)
+    loss_current = loss′(x_train, y_train)
+
+    trigger_noimprovement = Flux.early_stopping(identity, patience; init_score=loss_current)
+
+    for epoch ∈ 1:max_epochs
+        train!(loss′, Flux.params(model), train_loader, optimizer)
+
+        loss_current = loss′(x_train, y_train)
+
+        @info "Epoch $epoch - loss: $loss_current"
+
+        if trigger_noimprovement(loss_current)
+            @info "No improvement for $patience epochs. Stopping early."
+            break
+        end
+    end
+
+    return model
+end
+
+
 x_train, y_train = MLDatasets.MNIST(Float32, split=:train)[:]
 x_train = Flux.flatten(x_train)
 y_train = onehotbatch(y_train, 0:9)
-train_loader = DataLoader((x_train, y_train), batchsize=256, shuffle=true)
-
 
 model = Chain(Dense(784, 32, relu, init=rand), Dense(32, 10, init=rand))
 
-opt = ADAM(3e-4)
-loss(x, y) = logitcrossentropy(model(x), y)
-
-lossvalue = loss(x_train, y_train)
-trigger_noimprovement = Flux.early_stopping(identity, 3; init_score=lossvalue)
-
-for epoch ∈ 1:100
-    train!(loss, Flux.params(model), train_loader, opt)
-    lossvalue = loss(x_train, y_train)
-    @info "Epoch $epoch - loss: $lossvalue"
-    if trigger_noimprovement(lossvalue)
-        @info "No improvement for 3 epochs. Stopping early."
-        break
-    end
-end
+traintoconvergence!(model, optimizer=ADAM(3e-4), train_data=(x_train, y_train), loss=logitcrossentropy)
 
 
 schedule = [
