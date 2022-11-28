@@ -46,6 +46,7 @@ function traintoconvergence!(
         end
     end
 
+    @info "Best loss: $loss_best"
     return loadmodel!(model, model_best)
 end
 
