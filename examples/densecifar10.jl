@@ -68,7 +68,7 @@ end
     x_train = Flux.flatten(x_train)
     y_train = onehotbatch(y_train, 0:9)
 
-    # Preshuffle train data
+    # Preshuffle train data (to have the same validation set accross training rounds)
     shuffled_indices = shuffle(1:length(train_data))
     x_train = selectdim(x_train, ndims(x_train), shuffled_indices) |> collect
     y_train = selectdim(y_train, ndims(y_train), shuffled_indices) |> collect
