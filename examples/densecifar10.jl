@@ -65,18 +65,18 @@ accuracy(model, x, y) = sum(onecold(cpu(model(x))) .== onecold(cpu(y))) / size(x
 
 
 @timev begin
-    train_data = MLDatasets.MNIST(Float32, split=:train)
-    x_train, y_train = train_data[:]
+    data_train = MLDatasets.MNIST(Float32, split=:train)
+    x_train, y_train = data_train[:]
     x_train = Flux.flatten(x_train)
     y_train = onehotbatch(y_train, 0:9)
 
-    test_data = MLDatasets.MNIST(Float32, split=:test)
-    x_test, y_test = test_data[:]
+    data_test = MLDatasets.MNIST(Float32, split=:test)
+    x_test, y_test = data_test[:]
     x_test = Flux.flatten(x_test)
     y_test = onehotbatch(y_test, 0:9)
 
     # Preshuffle train data (to have the same validation set accross training rounds)
-    shuffled_indices = shuffle(1:length(train_data))
+    shuffled_indices = shuffle(1:length(data_train))
     x_train = selectdim(x_train, ndims(x_train), shuffled_indices) |> collect
     y_train = selectdim(y_train, ndims(y_train), shuffled_indices) |> collect
 
