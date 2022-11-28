@@ -57,13 +57,13 @@ y_train = onehotbatch(y_train, 0:9)
 
 model = Chain(Dense(784, 32, relu, init=rand), Dense(32, 10, init=rand))
 
-traintoconvergence!(model, optimizer=ADAM(3e-4), train_data=(x_train, y_train), loss=logitcrossentropy, patience=3)
+traintoconvergence!(model, optimizer=ADAM(3e-4), train_data=(x_train, y_train), loss=logitcrossentropy, patience=2)
 
 sparsemodel = deepcopy(model)
-for target_sparsity ∈ (0.5, 0.75, 0.9)
+for target_sparsity ∈ (0.9, 0.95)
     @info "Sparsity:" current=sparsity(sparsemodel) target=target_sparsity
     sparsemodel = prunelayer(model, PruneByPercentage(target_sparsity))
-    traintoconvergence!(sparsemodel, optimizer=ADAM(3e-4), train_data=(x_train, y_train), loss=logitcrossentropy, patience=4)
+    traintoconvergence!(sparsemodel, optimizer=ADAM(3e-4), train_data=(x_train, y_train), loss=logitcrossentropy, patience=2)
 end
 
 @info "End results:" Δloss=(logitcrossentropy(model(x_train), y_train) - logitcrossentropy(sparsemodel(x_train), y_train)) sparsity=sparsity(sparsemodel)
