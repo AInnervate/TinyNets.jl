@@ -15,10 +15,11 @@ function traintoconvergence!(
     optimizer,
     train_data,
     loss,
+    batchsize = 128,
     max_epochs = 100,
     patience = 3,
 )
-    train_loader = DataLoader(train_data, batchsize=256, shuffle=true)
+    train_loader = DataLoader(train_data, batchsize=batchsize, shuffle=true)
 
     loss′(x, y) = loss(model(x), y)
     loss_current = loss′(x_train, y_train)
