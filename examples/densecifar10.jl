@@ -57,7 +57,7 @@ function traintoconvergence!(
     end
 
     loadmodel!(model, model_best)
-    @info "Best loss (validation/train): $valloss_best / $(loss′(x_train, y_train))\n"
+    @info "Best loss (validation/train): $valloss_best / $(loss′(x_train, y_train))"
     return model
 end
 
@@ -77,6 +77,8 @@ end
 
     traintoconvergence!(model, optimizer=ADAM(3e-4), train_data=(x_train, y_train), loss=logitcrossentropy, max_epochs=2, patience=2)
 
+    println()
+    @info "Pruning..."
     sparsemodel = deepcopy(model)
     for target_sparsity ∈ (0.9, 0.95)
         @info "Sparsity:" current=sparsity(sparsemodel) target=target_sparsity
