@@ -70,6 +70,11 @@ accuracy(model, x, y) = sum(onecold(cpu(model(x))) .== onecold(cpu(y))) / size(x
     x_train = Flux.flatten(x_train)
     y_train = onehotbatch(y_train, 0:9)
 
+    test_data = MLDatasets.MNIST(Float32, split=:test)
+    x_test, y_test = test_data[:]
+    x_test = Flux.flatten(x_test)
+    y_test = onehotbatch(y_test, 0:9)
+
     # Preshuffle train data (to have the same validation set accross training rounds)
     shuffled_indices = shuffle(1:length(train_data))
     x_train = selectdim(x_train, ndims(x_train), shuffled_indices) |> collect
@@ -78,7 +83,7 @@ accuracy(model, x, y) = sum(onecold(cpu(model(x))) .== onecold(cpu(y))) / size(x
     model = Chain(Dense(784, 32, relu), Dense(32, 10))
 
     traintoconvergence!(model, optimizer=ADAM(3e-4), train_data=(x_train, y_train), loss=logitcrossentropy, max_epochs=2, patience=2)
-    @info "Accuracy:" train=accuracy(model, x_train, y_train)
+    @info "Accuracy:" test=accuracy(model, x_test, y_test) train=accuracy(model, x_train, y_train)
 
     println()
     @info "Pruning..."
@@ -87,12 +92,14 @@ accuracy(model, x, y) = sum(onecold(cpu(model(x))) .== onecold(cpu(y))) / size(x
         @info "Sparsity:" current=sparsity(sparsemodel) target=target_sparsity
         sparsemodel = prunelayer(model, PruneByPercentage(target_sparsity))
         traintoconvergence!(sparsemodel, optimizer=ADAM(3e-4), train_data=(x_train, y_train), loss=logitcrossentropy, max_epochs=2, patience=2)
-        @info "Accuracy:" train=accuracy(sparsemodel, x_train, y_train)
+        @info "Accuracy:" test=accuracy(sparsemodel, x_test, y_test) train=accuracy(sparsemodel, x_train, y_train)
     end
 
     @info("End results:",
         sparsity=sparsity(sparsemodel),
-        Δaccuracy=accuracy(model, x_train, y_train) - accuracy(sparsemodel, x_train, y_train),
-        Δloss=(logitcrossentropy(model(x_train), y_train) - logitcrossentropy(sparsemodel(x_train), y_train)),
+        Δaccuracy_test=accuracy(model, x_test, y_test) - accuracy(sparsemodel, x_test, y_test),
+        Δaccuracy_train=accuracy(model, x_train, y_train) - accuracy(sparsemodel, x_train, y_train),
+        Δloss_test=(logitcrossentropy(model(x_test), y_test) - logitcrossentropy(sparsemodel(x_test), y_test)),
+        Δloss_train=(logitcrossentropy(model(x_train), y_train) - logitcrossentropy(sparsemodel(x_train), y_train)),
     )
 end
