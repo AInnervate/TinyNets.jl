@@ -75,7 +75,7 @@ accuracy(model, x, y) = sum(onecold(cpu(model(x))) .== onecold(cpu(y))) / size(x
     x_train = selectdim(x_train, ndims(x_train), shuffled_indices) |> collect
     y_train = selectdim(y_train, ndims(y_train), shuffled_indices) |> collect
 
-    model = Chain(Dense(784, 32, relu, init=rand), Dense(32, 10, init=rand))
+    model = Chain(Dense(784, 32, relu), Dense(32, 10))
 
     traintoconvergence!(model, optimizer=ADAM(3e-4), train_data=(x_train, y_train), loss=logitcrossentropy, max_epochs=2, patience=2)
     @info "Accuracy:" train=accuracy(model, x_train, y_train)
