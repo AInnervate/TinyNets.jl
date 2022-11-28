@@ -44,7 +44,7 @@ function traintoconvergence!(
 
         valloss_current = loss′(x_val, y_val)
 
-        @info "Epoch $epoch - validation loss: $valloss_current"
+        @info "Epoch $epoch - loss (validation/train): $valloss_current / $(loss′(x_train, y_train))"
 
         if valloss_current < valloss_best
             valloss_best = valloss_current
@@ -56,8 +56,9 @@ function traintoconvergence!(
         end
     end
 
-    @info "Best validation loss: $valloss_best\n"
-    return loadmodel!(model, model_best)
+    loadmodel!(model, model_best)
+    @info "Best loss (validation/train): $valloss_best / $(loss′(x_train, y_train))\n"
+    return model
 end
 
 
