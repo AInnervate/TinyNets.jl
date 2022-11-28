@@ -59,10 +59,11 @@ model = Chain(Dense(784, 32, relu, init=rand), Dense(32, 10, init=rand))
 
 traintoconvergence!(model, optimizer=ADAM(3e-4), train_data=(x_train, y_train), loss=logitcrossentropy, patience=3)
 
-schedule = [
-    (PruneByPercentage(0.50), TuneByLossDifference(0.001)),
-    (PruneByPercentage(0.75), TuneByLossDifference(0.001)),
-    (PruneByPercentage(0.90), TuneByLossDifference(0.001))
-]
+sparsemodel = deepcopy(model)
+for target_sparsity ∈ (0.5, 0.75, 0.9)
+    @info "Sparsity:" current=sparsity(sparsemodel) target=target_sparsity
+    sparsemodel = prunelayer(model, PruneByPercentage(target_sparsity))
+    traintoconvergence!(sparsemodel, optimizer=ADAM(3e-4), train_data=(x_train, y_train), loss=logitcrossentropy, patience=4)
+end
 
-sparsemodel = scheduledpruning(model, schedule, logitcrossentropy, opt, train_loader, verbose=true)
+@info "End results:" Δloss=(logitcrossentropy(model(x_train), y_train) - logitcrossentropy(sparsemodel(x_train), y_train)) sparsity=sparsity(sparsemodel)
