@@ -18,12 +18,20 @@ train_loader = DataLoader((x_train, y_train), batchsize=256, shuffle=true)
 
 model = Chain(Dense(784, 32, relu, init=rand), Dense(32, 10, init=rand))
 
-loss(x, y) = logitcrossentropy(model(x), y)
 opt = ADAM(3e-4)
+loss(x, y) = logitcrossentropy(model(x), y)
 
-for epoch ∈ 1:20
+lossvalue = loss(x_train, y_train)
+trigger_noimprovement = Flux.early_stopping(identity, 3; init_score=lossvalue)
+
+for epoch ∈ 1:100
     train!(loss, Flux.params(model), train_loader, opt)
-    @info "Epoch $epoch - loss: $(loss(x_train, y_train))"
+    lossvalue = loss(x_train, y_train)
+    @info "Epoch $epoch - loss: $lossvalue"
+    if trigger_noimprovement(lossvalue)
+        @info "No improvement for 3 epochs. Stopping early."
+        break
+    end
 end
 
 
