@@ -15,11 +15,11 @@ function traintoconvergence!(
     optimizer,
     train_data,
     loss,
-    batchsize = 128,
+    batch_size = 128,
     max_epochs = 100,
     patience = 3,
 )
-    train_loader = DataLoader(train_data, batchsize=batchsize, shuffle=true)
+    train_loader = DataLoader(train_data, batchsize=batch_size, shuffle=true)
 
     loss′(x, y) = loss(model(x), y)
     loss_current = loss′(x_train, y_train)
@@ -49,6 +49,7 @@ function traintoconvergence!(
     @info "Best loss: $loss_best\n"
     return loadmodel!(model, model_best)
 end
+
 
 @timev begin
     x_train, y_train = MLDatasets.MNIST(Float32, split=:train)[:]
