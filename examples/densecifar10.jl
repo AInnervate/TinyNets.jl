@@ -6,6 +6,8 @@ using Flux.Data: DataLoader
 using Flux: train!, onehotbatch
 using Flux.Losses: logitcrossentropy
 using MLDatasets
+using Random: seed!
+seed!(0x35c88aa0a17d0e83)
 
 
 x_train, y_train = MLDatasets.MNIST(Float32, split=:train)[:]
