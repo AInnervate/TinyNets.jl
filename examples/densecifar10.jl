@@ -6,8 +6,8 @@ using Flux.Data: DataLoader
 using Flux: train!, onehotbatch, loadmodel!
 using Flux.Losses: logitcrossentropy
 using MLDatasets
-using Random: seed!
-seed!(0x35c88aa0a17d0e83)
+using Random
+Random.seed!(0x35c88aa0a17d0e83)
 
 
 function traintoconvergence!(
@@ -63,9 +63,15 @@ end
 
 
 @timev begin
-    x_train, y_train = MLDatasets.MNIST(Float32, split=:train)[:]
+    train_data = MLDatasets.MNIST(Float32, split=:train)
+    x_train, y_train = train_data[:]
     x_train = Flux.flatten(x_train)
     y_train = onehotbatch(y_train, 0:9)
+
+    # Preshuffle train data
+    shuffled_indices = shuffle(1:length(train_data))
+    x_train = selectdim(x_train, ndims(x_train), shuffled_indices) |> collect
+    y_train = selectdim(y_train, ndims(y_train), shuffled_indices) |> collect
 
     model = Chain(Dense(784, 32, relu, init=rand), Dense(32, 10, init=rand))
 
