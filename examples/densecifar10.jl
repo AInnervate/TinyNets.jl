@@ -50,20 +50,21 @@ function traintoconvergence!(
     return loadmodel!(model, model_best)
 end
 
+@timev begin
+    x_train, y_train = MLDatasets.MNIST(Float32, split=:train)[:]
+    x_train = Flux.flatten(x_train)
+    y_train = onehotbatch(y_train, 0:9)
 
-x_train, y_train = MLDatasets.MNIST(Float32, split=:train)[:]
-x_train = Flux.flatten(x_train)
-y_train = onehotbatch(y_train, 0:9)
+    model = Chain(Dense(784, 32, relu, init=rand), Dense(32, 10, init=rand))
 
-model = Chain(Dense(784, 32, relu, init=rand), Dense(32, 10, init=rand))
+    traintoconvergence!(model, optimizer=ADAM(3e-4), train_data=(x_train, y_train), loss=logitcrossentropy, patience=2)
 
-traintoconvergence!(model, optimizer=ADAM(3e-4), train_data=(x_train, y_train), loss=logitcrossentropy, patience=2)
+    sparsemodel = deepcopy(model)
+    for target_sparsity ∈ (0.9, 0.95)
+        @info "Sparsity:" current=sparsity(sparsemodel) target=target_sparsity
+        sparsemodel = prunelayer(model, PruneByPercentage(target_sparsity))
+        traintoconvergence!(sparsemodel, optimizer=ADAM(3e-4), train_data=(x_train, y_train), loss=logitcrossentropy, patience=2)
+    end
 
-sparsemodel = deepcopy(model)
-for target_sparsity ∈ (0.9, 0.95)
-    @info "Sparsity:" current=sparsity(sparsemodel) target=target_sparsity
-    sparsemodel = prunelayer(model, PruneByPercentage(target_sparsity))
-    traintoconvergence!(sparsemodel, optimizer=ADAM(3e-4), train_data=(x_train, y_train), loss=logitcrossentropy, patience=2)
+    @info "End results:" Δloss=(logitcrossentropy(model(x_train), y_train) - logitcrossentropy(sparsemodel(x_train), y_train)) sparsity=sparsity(sparsemodel)
 end
-
-@info "End results:" Δloss=(logitcrossentropy(model(x_train), y_train) - logitcrossentropy(sparsemodel(x_train), y_train)) sparsity=sparsity(sparsemodel)
