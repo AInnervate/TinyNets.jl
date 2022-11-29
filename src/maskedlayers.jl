@@ -23,6 +23,19 @@ function MaskedLayer(layer::T) where T
     return MaskedLayer{T}(layer, mask)
 end
 
+
+function applymask!(mlayer::MaskedLayer)
+    for (p, m) ∈ zip(Flux.params(mlayer.layer), Flux.params(mlayer.mask))
+        p .*= m
+    end
+    return nothing
+end
+
+function (mlayer::MaskedLayer)(x...)
+    applymask!(mlayer)
+    return mlayer.layer(x...)
+end
+
 end
 
 
