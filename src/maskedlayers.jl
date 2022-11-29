@@ -26,6 +26,8 @@ function MaskedLayer(layer::T) where T
 end
 
 Flux.@functor MaskedLayer
+# TODO: masks are not properly moved to GPU
+#       Masking a layer that is already on GPU does work, though
 Flux.trainable(m::MaskedLayer) = (m.layer,)
 
 
