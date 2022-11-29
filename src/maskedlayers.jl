@@ -3,7 +3,7 @@ module MaskedLayers
 using Flux
 
 
-export MaskedLayer
+export mask, unmask
 
 
 struct MaskedLayer{T}
@@ -23,6 +23,11 @@ function MaskedLayer(layer::T) where T
     return MaskedLayer{T}(layer, mask)
 end
 
+mask(layer) = MaskedLayer(layer)
+mask(ch::Chain) = Chain(mask.(ch))
+
+unmask(mlayer::MaskedLayer) = mlayer.layer
+unmask(ch::Chain) = Chain(unmask.(ch))
 
 function applymask!(mlayer::MaskedLayer)
     for (p, m) ∈ zip(Flux.params(mlayer.layer), Flux.params(mlayer.mask))
