@@ -26,9 +26,10 @@ function MaskedLayer(layer::T) where T
 end
 
 Flux.@functor MaskedLayer
-# TODO: masks are not properly moved to GPU
-#       Masking a layer that is already on GPU does work, though
-Flux.trainable(m::MaskedLayer) = (m.layer,)
+# Keeping the mask as non-parameter makes sure that training won't modify it
+Flux.trainable(mlayer::MaskedLayer) = (mlayer.layer,)
+# Since the mask is not a parameter, we need to explicitly tell how to also move it to GPU
+Flux.gpu(mlayer::MaskedLayer) = mask(Flux.gpu(mlayer.layer))
 
 
 mask(layer) = MaskedLayer(deepcopy(layer))
