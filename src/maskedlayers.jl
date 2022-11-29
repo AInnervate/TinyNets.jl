@@ -51,15 +51,3 @@ function (mlayer::MaskedLayer)(x...)
 end
 
 end
-
-
-# using Flux
-# using .MaskedLayers
-
-# begin
-#     model = Dense(3, 3)
-#     @show model(ones(3))
-#     model_masked = mask(model)
-#     @show model_masked(ones(3))
-#     @show Flux.params(model_masked)
-# end
