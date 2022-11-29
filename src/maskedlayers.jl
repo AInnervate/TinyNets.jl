@@ -18,7 +18,7 @@ function MaskedLayer(layer::T) where T
         @warn "MaskedLayer not implemented for `$(Base.typename(typeof(layer)).wrapper)` layers. Returning input layer as is."
         return layer
     end
-    mask = deepcopy(Flux.params(layer))
+    mask = copy.(Flux.params(layer))
     for m ∈ mask
         m .= oneunit(eltype(m))
     end
