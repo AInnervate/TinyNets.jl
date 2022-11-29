@@ -36,6 +36,7 @@ mask(ch::Chain) = Chain(mask.(ch))
 
 unmask(mlayer::MaskedLayer) = mlayer.layer
 unmask(ch::Chain) = Chain(unmask.(ch))
+unmask(layer) = layer
 
 function applymask!(mlayer::MaskedLayer)
     for (p, m) ∈ zip(Flux.params(mlayer.layer), mlayer.mask)
