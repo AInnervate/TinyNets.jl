@@ -1,6 +1,7 @@
 module MaskedLayers
 
 using Flux
+using ChainRulesCore
 
 
 export mask, unmask
@@ -24,6 +25,10 @@ function MaskedLayer(layer::T) where T
     return MaskedLayer{T}(layer, mask)
 end
 
+Flux.@functor MaskedLayer
+Flux.trainable(m::MaskedLayer) = (m.layer,)
+
+
 mask(layer) = MaskedLayer(deepcopy(layer))
 mask(ch::Chain) = Chain(mask.(ch))
 
@@ -38,7 +43,7 @@ function applymask!(mlayer::MaskedLayer)
 end
 
 function (mlayer::MaskedLayer)(x...)
-    applymask!(mlayer)
+    @ignore_derivatives applymask!(mlayer)
     return mlayer.layer(x...)
 end
 
