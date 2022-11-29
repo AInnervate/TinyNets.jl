@@ -9,6 +9,7 @@ export mask, unmask
 struct MaskedLayer{T}
     layer::T
     mask::T
+    # TODO: add custom constructor with proper checks
 end
 
 function MaskedLayer(layer::T) where T
