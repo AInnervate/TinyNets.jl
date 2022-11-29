@@ -15,7 +15,7 @@ end
 
 function MaskedLayer(layer::T) where T
     if !(T <: Dense || T <: Conv)
-        @warn "MaskedLayer not implemented for `$(Base.typename(typeof(layer)).wrapper)` layers. Returning original layer."
+        @warn "MaskedLayer not implemented for `$(Base.typename(typeof(layer)).wrapper)` layers. Returning input layer as is."
         return layer
     end
     mask = deepcopy(Flux.params(layer))
@@ -53,3 +53,13 @@ end
 end
 
 
+# using Flux
+# using .MaskedLayers
+
+# begin
+#     model = Dense(3, 3)
+#     @show model(ones(3))
+#     model_masked = mask(model)
+#     @show model_masked(ones(3))
+#     @show Flux.params(model_masked)
+# end
