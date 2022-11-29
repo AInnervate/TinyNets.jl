@@ -23,7 +23,7 @@ function MaskedLayer(layer::T) where T
     return MaskedLayer{T}(layer, mask)
 end
 
-mask(layer) = MaskedLayer(layer)
+mask(layer) = MaskedLayer(deepcopy(layer))
 mask(ch::Chain) = Chain(mask.(ch))
 
 unmask(mlayer::MaskedLayer) = mlayer.layer
