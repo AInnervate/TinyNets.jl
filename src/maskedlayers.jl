@@ -7,9 +7,9 @@ using ChainRulesCore
 export mask, unmask
 
 
-struct MaskedLayer{T}
+struct MaskedLayer{T, Tm}
     layer::T
-    mask::T
+    mask::Tm
     # TODO: add custom constructor with proper checks
 end
 
@@ -18,11 +18,11 @@ function MaskedLayer(layer::T) where T
         @warn "MaskedLayer not implemented for `$(Base.typename(typeof(layer)).wrapper)` layers. Returning original layer."
         return layer
     end
-    mask = deepcopy(layer)
-    for p ∈ Flux.params(mask)
-        p .= oneunit(eltype(p))
+    mask = deepcopy(Flux.params(layer))
+    for m ∈ mask
+        m .= oneunit(eltype(m))
     end
-    return MaskedLayer{T}(layer, mask)
+    return MaskedLayer{T, typeof(mask)}(layer, mask)
 end
 
 Flux.@functor MaskedLayer
@@ -36,10 +36,9 @@ unmask(mlayer::MaskedLayer) = mlayer.layer
 unmask(ch::Chain) = Chain(unmask.(ch))
 
 function applymask!(mlayer::MaskedLayer)
-    for (p, m) ∈ zip(Flux.params(mlayer.layer), Flux.params(mlayer.mask))
+    for (p, m) ∈ zip(Flux.params(mlayer.layer), mlayer.mask)
         p .*= m
     end
-    return nothing
 end
 
 function (mlayer::MaskedLayer)(x...)
