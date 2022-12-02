@@ -2,6 +2,7 @@ module Prune
 
 using Flux
 using Random
+using Printf
 
 
 nnz(model) = sum(x->count(!iszero, x), Flux.params(model))
