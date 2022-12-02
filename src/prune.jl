@@ -27,15 +27,17 @@ Prune parameters of `model` with the lowest values of `by` so that only a `targe
 It considers the parameter pool the entire model. For example, `prune!(model; by=abs, target_sparsity=0.2)` performs a global magnitude pruning of 80% of the model.
 Layer-wise pruning can be achieved through broadcasting, e.g., `prune!.(model; by=abs, target_sparsity=0.1)`.
 """
-function prune!(model; by::Function, target_sparsity::Real)
+function prune!(model; by::Function, target_sparsity::Real, verbose::Bool=false)
     @assert 0 ≤ target_sparsity ≤ 1
 
+    verbose && @info @sprintf("Current sparsity: %.1f%%. Pruning to target sparsity: %.1f%%.", 100*sparsity(model), 100*target_sparsity)
     refs = [Ref(p, i) for p in Flux.params(model) for i in eachindex(p)]
     n_toprune = round(Int, target_sparsity * countparams(model))
     indices = partialsortperm(refs, 1:n_toprune, by=by∘getindex)
     for i ∈ indices
         refs[i][] = zero(refs[i][])
     end
+    verbose && @info @sprintf("Final sparsity: %.1f%%.", 100*sparsity(model))
 
     return model
 end
