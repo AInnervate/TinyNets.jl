@@ -28,7 +28,7 @@ end
 Flux.@functor MaskedLayer
 # Keeping the mask as non-parameter makes sure that training won't modify it
 Flux.trainable(mlayer::MaskedLayer) = (mlayer.layer,)
-# Since the mask is not a parameter, we need to explicitly tell how to also move it to GPU
+# Since the mask is not a parameter, we need to say explicitly how to also move it to GPU
 Flux.gpu(mlayer::MaskedLayer) = mask(Flux.gpu(mlayer.layer))
 
 
