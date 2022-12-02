@@ -45,6 +45,22 @@ function applymask!(mlayer::MaskedLayer)
         p .*= m
     end
 end
+applymask!(l) = nothing
+
+# TODO: find a better name for this function
+"""
+    updatemask!(mlayer::MaskedLayer)
+
+Update the the mask of a `MaskedLayer` to match the current weights of the layer: set to 0 the mask of weights that are 0, and to 1 the mask of those that are not.
+"""
+function updatemask!(mlayer::MaskedLayer)
+    for (p, m) ∈ zip(Flux.params(mlayer.layer), mlayer.mask)
+        m0 = zero(eltype(m))
+        m1 = oneunit(eltype(m))
+        @. m = ifelse(iszero(p), m0, m1)
+    end
+end
+updatemask!(l) = nothing
 
 function (mlayer::MaskedLayer)(x...)
     @ignore_derivatives applymask!(mlayer)
