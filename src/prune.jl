@@ -40,7 +40,7 @@ function prune!(model; by::Function, target_sparsity::Real, verbose::Bool=false)
 
     verbose && @info @sprintf("Current sparsity: %.1f%%. Pruning to target sparsity: %.1f%%.", 100*current_sparsity, 100*target_sparsity)
     refs = [Ref(p, i) for p in Flux.params(model) for i in eachindex(p)]
-    n_toprune = round(Int, target_sparsity * length(refs))
+    n_toprune = round(Int, Δsparsity * length(refs))
     indices = partialsortperm(refs, 1:n_toprune, by=by∘getindex)
     for i ∈ indices
         refs[i][] = zero(refs[i][])
