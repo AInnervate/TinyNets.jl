@@ -19,5 +19,13 @@ end
 
 drop(A, qty, by) = drop!(copy(A), qty, by)
 
+function prune!(layer; by::Function, target_sparsity::Real)
+    @assert 0 ≤ target_sparsity ≤ 1
+
+    for p in Flux.params(layer)
+        p .= drop!(p, round(Int, length(p)*target_sparsity), by)
+    end
+end
+
 
 end
