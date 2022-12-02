@@ -19,12 +19,24 @@ end
 
 drop(A, qty, by) = drop!(copy(A), qty, by)
 
-function prune!(layer; by::Function, target_sparsity::Real)
+"""
+    prune!(model; by::Function, target_sparsity::Real)
+
+Prune parameters of `model` with the lowest values of `by` so that only a `target_sparsity` factor of the parameters are non-zero.
+
+Operates globally. Layer-wise pruning can be achieved through broadcasting, e.g., `prune!.(model; by=abs, target_sparsity=0.1)`.
+"""
+function prune!(model; by::Function, target_sparsity::Real)
     @assert 0 ≤ target_sparsity ≤ 1
 
-    for p in Flux.params(layer)
-        p .= drop!(p, round(Int, length(p)*target_sparsity), by)
+    refs = vcat((Ref(vec(p), i) for p in Flux.params(model) for i in 1:length(p))...)
+    n_toprune = round(Int, countparams(model)*target_sparsity)
+    indices = partialsortperm(refs, 1:n_toprune, by=by∘getindex)
+    for i ∈ indices
+        refs[i][] = zero(refs[i][])
     end
+
+    return model
 end
 
 
