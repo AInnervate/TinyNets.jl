@@ -24,7 +24,8 @@ drop(A, qty, by) = drop!(copy(A), qty, by)
 
 Prune parameters of `model` with the lowest values of `by` so that only a `target_sparsity` factor of the parameters are non-zero.
 
-Operates globally. Layer-wise pruning can be achieved through broadcasting, e.g., `prune!.(model; by=abs, target_sparsity=0.1)`.
+It considers the parameter pool the entire model. For example, `prune!(model; by=abs, target_sparsity=0.2)` performs a global magnitude pruning of 80% of the model.
+Layer-wise pruning can be achieved through broadcasting, e.g., `prune!.(model; by=abs, target_sparsity=0.1)`.
 """
 function prune!(model; by::Function, target_sparsity::Real)
     @assert 0 ≤ target_sparsity ≤ 1
