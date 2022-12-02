@@ -30,7 +30,7 @@ Layer-wise pruning can be achieved through broadcasting, e.g., `prune!.(model; b
 function prune!(model; by::Function, target_sparsity::Real)
     @assert 0 ≤ target_sparsity ≤ 1
 
-    refs = vcat((Ref(vec(p), i) for p in Flux.params(model) for i in 1:length(p))...)
+    refs = [Ref(p, i) for p in Flux.params(model) for i in eachindex(p)]
     n_toprune = round(Int, target_sparsity * countparams(model))
     indices = partialsortperm(refs, 1:n_toprune, by=by∘getindex)
     for i ∈ indices
