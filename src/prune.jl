@@ -17,4 +17,7 @@ function drop!(A::VecOrMat, qty::Int, by::Function)::VecOrMat
     return A
 end
 
+drop(A, qty, by) = drop!(copy(A), qty, by)
+
+
 end
