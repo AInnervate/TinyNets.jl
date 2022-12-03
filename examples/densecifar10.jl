@@ -1,5 +1,7 @@
-include("../src/prunelayers.jl")
-include("../src/schedulepruning.jl")
+include("../src/prune.jl")
+include("../src/maskedlayers.jl")
+using .Prune: prune!, sparsity
+using .MaskedLayers
 
 using Flux
 using Flux.Data: DataLoader
@@ -99,20 +101,20 @@ function main()
 
     println()
     @info "Pruning..."
-    sparsemodel = deepcopy(model)
+    maskedmodel = mask(model)
     for target_sparsity ∈ (0.9, 0.95)
-        @info "Sparsity:" current=sparsity(sparsemodel) target=target_sparsity
-        sparsemodel = prunelayer(model, PruneByPercentage(target_sparsity))
-        traintoconvergence!(sparsemodel, optimizer=ADAM(3e-4), train_data=(x_train, y_train), loss=logitcrossentropy, max_epochs=2, patience=2)
-        @info "Accuracy:" test=accuracy(sparsemodel, x_test, y_test) train=accuracy(sparsemodel, x_train, y_train)
+        prune!(maskedmodel, target_sparsity=target_sparsity, by=abs)
+        MaskedLayers.updatemask!.(maskedmodel)
+        traintoconvergence!(maskedmodel, optimizer=ADAM(3e-4), train_data=(x_train, y_train), loss=logitcrossentropy, max_epochs=100, patience=3)
+        @info "Accuracy:" test=accuracy(maskedmodel, x_test, y_test) train=accuracy(maskedmodel, x_train, y_train)
     end
 
     @info("End results:",
-        sparsity=sparsity(sparsemodel),
-        Δaccuracy_test=accuracy(model, x_test, y_test) - accuracy(sparsemodel, x_test, y_test),
-        Δaccuracy_train=accuracy(model, x_train, y_train) - accuracy(sparsemodel, x_train, y_train),
-        Δloss_test=(logitcrossentropy(model(x_test), y_test) - logitcrossentropy(sparsemodel(x_test), y_test)),
-        Δloss_train=(logitcrossentropy(model(x_train), y_train) - logitcrossentropy(sparsemodel(x_train), y_train)),
+        sparsity=sparsity(maskedmodel),
+        Δaccuracy_test=accuracy(model, x_test, y_test) - accuracy(maskedmodel, x_test, y_test),
+        Δaccuracy_train=accuracy(model, x_train, y_train) - accuracy(maskedmodel, x_train, y_train),
+        Δloss_test=(logitcrossentropy(model(x_test), y_test) - logitcrossentropy(maskedmodel(x_test), y_test)),
+        Δloss_train=(logitcrossentropy(model(x_train), y_train) - logitcrossentropy(maskedmodel(x_train), y_train)),
     )
 end
 
