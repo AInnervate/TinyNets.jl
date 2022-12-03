@@ -1,6 +1,7 @@
 module Prune
 
 using Flux
+using CUDA: @allowscalar
 using Random
 using Printf
 
@@ -40,11 +41,13 @@ function prune!(model; by::Function, target_sparsity::Real, verbose::Bool=false)
     end
 
     verbose && @info @sprintf("Current sparsity: %.1f%%. Pruning to target sparsity: %.1f%%.", 100*current_sparsity, 100*target_sparsity)
-    refs = [Ref(p, i) for p in Flux.params(model) for i in eachindex(p)]
-    n_toprune = round(Int, Δsparsity * length(refs))
-    indices = partialsortperm(refs, 1:n_toprune, by=by∘getindex)
-    for i ∈ indices
-        refs[i][] = zero(refs[i][])
+    @allowscalar begin
+        refs = [Ref(p, i) for p in Flux.params(model) for i in eachindex(p)]
+        n_toprune = round(Int, Δsparsity * length(refs))
+        indices = partialsortperm(refs, 1:n_toprune, by=by∘getindex)
+        for i ∈ indices
+            refs[i][] = zero(refs[i][])
+        end
     end
     verbose && @info @sprintf("Final sparsity: %.1f%%.", 100*sparsity(model))
 
