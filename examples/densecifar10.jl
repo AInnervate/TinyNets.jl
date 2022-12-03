@@ -5,7 +5,10 @@ using .MaskedLayers
 
 using Flux
 using Flux.Data: DataLoader
+using Flux.Losses: logitcrossentropy
 using Flux: train!, loadmodel!, onehotbatch, onecold
+using CUDA
+CUDA.allowscalar(false)
 using Printf
 using MLDatasets
 using Random
@@ -77,8 +80,7 @@ function traintoconvergence!(
 end
 
 
-
-function main()
+function main(device)
     data_train = MLDatasets.MNIST(Float32, split=:train)
     x_train, y_train = data_train[:]
     x_train = Flux.flatten(x_train)
@@ -95,6 +97,13 @@ function main()
     y_train = collect(selectdim(y_train, ndims(y_train), shuffled_indices))
 
     model = Chain(Dense(784, 32, relu), Dense(32, 10))
+
+    model = model |> device
+    x_train = x_train |> device
+    y_train = y_train |> device
+    x_test = x_test |> device
+    y_test = y_test |> device
+
 
     traintoconvergence!(model, optimizer=ADAM(3e-4), train_data=(x_train, y_train), loss=logitcrossentropy, max_epochs=2, patience=2)
     @info "Accuracy:" test=accuracy(model, x_test, y_test) train=accuracy(model, x_train, y_train)
@@ -118,3 +127,4 @@ function main()
     )
 end
 
+@timev main(gpu)
