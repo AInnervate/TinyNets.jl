@@ -4,7 +4,7 @@ include("../src/schedulepruning.jl")
 using Flux
 using Flux.Data: DataLoader
 using Flux: train!, loadmodel!, onehotbatch, onecold
-using Flux.Losses: logitcrossentropy
+using Printf
 using MLDatasets
 using Random
 Random.seed!(0x35c88aa0a17d0e83)
@@ -46,20 +46,22 @@ function traintoconvergence!(
 
         valloss_current = loss′(x_val, y_val)
 
-        @info "Epoch $epoch - loss (validation/train): $valloss_current / $(loss′(x_train, y_train))"
+        @info @sprintf("Epoch %3d - loss (val/train): %7.4f / %7.4f\e[F", epoch, valloss_current, loss′(x_train, y_train))
 
         if valloss_current < valloss_best
             valloss_best = valloss_current
             model_best = loadmodel!(model_best, model)
         end
         if trigger_noimprovement(valloss_current)
-            @info "No improvement for $patience epochs. Stopping early."
+            println()
+            @info "No improvement for $patience epochs. Stopping early.\e[F"
             break
         end
     end
+    println()
 
     loadmodel!(model, model_best)
-    @info "Best loss (validation/train): $valloss_best / $(loss′(x_train, y_train))"
+    @info "Best loss (val/train): $valloss_best / $(loss′(x_train, y_train))"
     return model
 end
 
