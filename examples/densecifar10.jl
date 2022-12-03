@@ -10,6 +10,8 @@ using Random
 Random.seed!(0x35c88aa0a17d0e83)
 
 
+accuracy(model, x, y) = count(onecold(cpu(model(x))) .== onecold(cpu(y))) / size(x)[end]
+
 function traintoconvergence!(
     model;
     optimizer,
@@ -23,7 +25,7 @@ function traintoconvergence!(
     x_data, y_data = train_data
     # Split the data into training and validation sets
     # NOTE: No shuffling is performed! Preshuffled data is assumed.
-    n_samples = x_data |> size |> last
+    n_samples = size(x_data)[end]
     n_val = round(Int, n_samples * validation_proportion)
     n_train = n_samples - n_val
     x_train, y_train = selectdim(x_data, ndims(x_data), 1:n_train), selectdim(y_data, ndims(y_data), 1:n_train)
@@ -61,7 +63,6 @@ function traintoconvergence!(
     return model
 end
 
-accuracy(model, x, y) = sum(onecold(cpu(model(x))) .== onecold(cpu(y))) / size(x)[end]
 
 
 function main()
@@ -104,4 +105,3 @@ function main()
     )
 end
 
-@timev main()
