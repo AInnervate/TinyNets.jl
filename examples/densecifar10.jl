@@ -28,8 +28,17 @@ function traintoconvergence!(
     n_samples = size(x_data)[end]
     n_val = round(Int, n_samples * validation_proportion)
     n_train = n_samples - n_val
-    x_train, y_train = selectdim(x_data, ndims(x_data), 1:n_train), selectdim(y_data, ndims(y_data), 1:n_train)
-    x_val, y_val = selectdim(x_data, ndims(x_data), n_train+1:n_samples), selectdim(y_data, ndims(y_data), n_train+1:n_samples)
+    x_train = collect(selectdim(x_data, ndims(x_data), 1:n_train))
+    y_train = collect(selectdim(y_data, ndims(y_data), 1:n_train))
+    x_val = collect(selectdim(x_data, ndims(x_data), n_train+1:n_samples))
+    y_val = collect(selectdim(y_data, ndims(y_data), n_train+1:n_samples))
+
+    if x_data isa CuArray
+        x_train = x_train |> gpu
+        y_train = y_train |> gpu
+        x_val = x_val |> gpu
+        y_val = y_val |> gpu
+    end
 
     train_loader = DataLoader((x_train, y_train), batchsize=batch_size, shuffle=false)
 
