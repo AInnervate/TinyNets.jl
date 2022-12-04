@@ -99,7 +99,7 @@ function main(device)
         Dense(size(x_train, 1), 64, gelu),
         Dense(64, 64, gelu),
         Dense(64, 64, gelu),
-        Dense(64, 10)
+        Dense(64, size(y_train, 1))
     )
 
     model = model |> device
