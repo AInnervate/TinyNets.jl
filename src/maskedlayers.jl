@@ -30,7 +30,7 @@ Flux.@functor MaskedLayer
 Flux.trainable(mlayer::MaskedLayer) = (mlayer.layer,)
 # Since the mask is not a parameter, we need to say explicitly how to also move it to GPU
 Flux.gpu(mlayer::MaskedLayer) = mask(Flux.gpu(mlayer.layer))
-
+# TODO: do the same for CPU
 
 mask(layer) = MaskedLayer(deepcopy(layer))
 mask(ch::Chain) = Chain(mask.(ch))

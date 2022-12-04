@@ -33,6 +33,7 @@ function prune!(model; by::Function, target_sparsity::Real, verbose::Bool=false)
     @assert 0 ≤ target_sparsity ≤ 1
 
     verbose && @info @sprintf("Current sparsity: %.1f%%. Pruning to target sparsity: %.1f%%.", 100*sparsity(model), 100*target_sparsity)
+    # TODO: try doing it on CPU and moving back to GPU if needed. It could be faster.
     @allowscalar begin
         refs = [Ref(p, i) for p in Flux.params(model) for i in eachindex(p)]
         n_toprune = round(Int, target_sparsity * length(refs))
