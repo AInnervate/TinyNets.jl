@@ -83,12 +83,12 @@ function main(device)
     data_train = MLDatasets.FashionMNIST(Float32, split=:train)
     x_train, y_train = data_train[:]
     x_train = Flux.flatten(x_train)
-    y_train = onehotbatch(y_train, 0:9)
+    y_train = Float32.(onehotbatch(y_train, 0:9))
 
     data_test = MLDatasets.FashionMNIST(Float32, split=:test)
     x_test, y_test = data_test[:]
     x_test = Flux.flatten(x_test)
-    y_test = onehotbatch(y_test, 0:9)
+    y_test = Float32.(onehotbatch(y_test, 0:9))
 
     # Preshuffle train data (to have the same validation set accross training rounds)
     shuffled_indices = shuffle(1:length(data_train))
