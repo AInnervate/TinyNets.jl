@@ -79,7 +79,6 @@ function traintoconvergence!(
     return model
 end
 
-
 function main(device)
     data_train = MLDatasets.FashionMNIST(Float32, split=:train)
     x_train, y_train = data_train[:]
@@ -130,5 +129,6 @@ function main(device)
         Δloss_train=(logitcrossentropy(model(x_train), y_train) - logitcrossentropy(maskedmodel(x_train), y_train)),
     )
 end
+
 
 @timev main(gpu)
