@@ -97,8 +97,9 @@ function main(device)
     y_train = collect(selectdim(y_train, ndims(y_train), shuffled_indices))
 
     model = Chain(
-        Dense(size(x_train, 1), 64, gelu),
-        Dense(64, 64, gelu),
+        Dense(size(x_train, 1), 256, gelu),
+        Dense(256, 128, gelu),
+        Dense(128, 64, gelu),
         Dense(64, 64, gelu),
         Dense(64, size(y_train, 1))
     )
