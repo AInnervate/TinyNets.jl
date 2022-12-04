@@ -109,12 +109,11 @@ function main(device)
     @info "Accuracy:" test=accuracy(model, x_test, y_test) train=accuracy(model, x_train, y_train)
 
     println()
-    @info "Pruning..."
     maskedmodel = mask(model)
     for target_sparsity ∈ (0.9, 0.95)
-        prune!(maskedmodel, target_sparsity=target_sparsity, by=abs, verbose=true)
+        @time "Prune step" prune!(maskedmodel, target_sparsity=target_sparsity, by=abs, verbose=true)
         MaskedLayers.updatemask!.(maskedmodel)
-        traintoconvergence!(maskedmodel, optimizer=ADAM(3e-4), train_data=(x_train, y_train), loss=logitcrossentropy, max_epochs=100, patience=3)
+        @time "Finetune step" traintoconvergence!(maskedmodel, optimizer=ADAM(3e-4), train_data=(x_train, y_train), loss=logitcrossentropy, max_epochs=100, patience=3)
         @info "Accuracy:" test=accuracy(maskedmodel, x_test, y_test) train=accuracy(maskedmodel, x_train, y_train)
     end
 
