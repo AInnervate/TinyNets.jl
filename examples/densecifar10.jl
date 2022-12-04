@@ -59,14 +59,15 @@ function traintoconvergence!(
         train!(loss′, Flux.params(model), train_loader, optimizer)
 
         valloss_current = loss′(x_val, y_val)
+        trainloss_current = loss′(x_train, y_train)
 
-        @info @sprintf("Epoch %3d - loss (val/train): %7.4f / %7.4f\e[F", epoch, valloss_current, loss′(x_train, y_train))
+        @info @sprintf("Epoch %3d - loss (val/train): %7.4f / %7.4f\e[F", epoch, valloss_current, trainloss_current)
 
         if valloss_current < valloss_best
             valloss_best = valloss_current
             model_best = loadmodel!(model_best, model)
         end
-        if trigger_noimprovement(valloss_current)
+        if trigger_noimprovement(trainloss_current)
             println()
             @info "No improvement for $patience epochs. Stopping early.\e[F"
             break
