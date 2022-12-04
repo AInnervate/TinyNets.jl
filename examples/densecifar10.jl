@@ -112,7 +112,7 @@ function main(device)
 
 
     traintoconvergence!(model, optimizer=ADAM(3e-4), train_data=(x_train, y_train), loss=logitcrossentropy, max_epochs=100, patience=5)
-    @info "Accuracy:" test=accuracy(model, x_test, y_test) train=accuracy(model, x_train, y_train)
+    @info @sprintf("Original accuracy:\n\ttest\t%2.1f%%\n\ttrain\t%2.1f%%", 100*accuracy(model, x_test, y_test), 100*accuracy(model, x_train, y_train))
 
     println()
     maskedmodel = mask(model)
@@ -120,15 +120,19 @@ function main(device)
         @time "Prune step" prune!(maskedmodel, target_sparsity=target_sparsity, by=abs, verbose=true)
         MaskedLayers.updatemask!.(maskedmodel)
         @time "Finetune step" traintoconvergence!(maskedmodel, optimizer=ADAM(3e-4), train_data=(x_train, y_train), loss=logitcrossentropy, max_epochs=100, patience=5)
-        @info "Accuracy:" test=accuracy(maskedmodel, x_test, y_test) train=accuracy(maskedmodel, x_train, y_train)
+        @info @sprintf("Accuracy:\n\ttest\t%2.1f%%\n\ttrain\t%2.1f%%", 100*accuracy(maskedmodel, x_test, y_test), 100*accuracy(maskedmodel, x_train, y_train))
     end
 
-    @info("End results:",
-        sparsity=sparsity(maskedmodel),
-        Δaccuracy_test=accuracy(model, x_test, y_test) - accuracy(maskedmodel, x_test, y_test),
-        Δaccuracy_train=accuracy(model, x_train, y_train) - accuracy(maskedmodel, x_train, y_train),
-        Δloss_test=(logitcrossentropy(model(x_test), y_test) - logitcrossentropy(maskedmodel(x_test), y_test)),
-        Δloss_train=(logitcrossentropy(model(x_train), y_train) - logitcrossentropy(maskedmodel(x_train), y_train)),
+    println()
+    @info @sprintf("""
+        Final results:
+            sparsity     %+2.1f%%
+            Δacc (test)  %+2.1f%%
+            Δacc (train) %+2.1f%%
+        """,
+        100*sparsity(maskedmodel),
+        100*(accuracy(maskedmodel, x_test, y_test) - accuracy(model, x_test, y_test)),
+        100*(accuracy(maskedmodel, x_train, y_train) - accuracy(model, x_train, y_train)),
     )
 end
 
