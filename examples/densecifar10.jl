@@ -81,12 +81,12 @@ end
 
 
 function main(device)
-    data_train = MLDatasets.MNIST(Float32, split=:train)
+    data_train = MLDatasets.FashionMNIST(Float32, split=:train)
     x_train, y_train = data_train[:]
     x_train = Flux.flatten(x_train)
     y_train = onehotbatch(y_train, 0:9)
 
-    data_test = MLDatasets.MNIST(Float32, split=:test)
+    data_test = MLDatasets.FashionMNIST(Float32, split=:test)
     x_test, y_test = data_test[:]
     x_test = Flux.flatten(x_test)
     y_test = onehotbatch(y_test, 0:9)
