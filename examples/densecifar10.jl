@@ -110,12 +110,12 @@ function main(device)
     y_test = y_test |> device
 
 
-    traintoconvergence!(model, optimizer=ADAM(3e-4), train_data=(x_train, y_train), loss=logitcrossentropy, max_epochs=2, patience=2)
+    traintoconvergence!(model, optimizer=ADAM(3e-4), train_data=(x_train, y_train), loss=logitcrossentropy, max_epochs=100, patience=3)
     @info "Accuracy:" test=accuracy(model, x_test, y_test) train=accuracy(model, x_train, y_train)
 
     println()
     maskedmodel = mask(model)
-    for target_sparsity ∈ (0.9, 0.95)
+    for target_sparsity ∈ (0.5, 0.7, 0.8, 0.85, 0.9:0.02:0.96...)
         @time "Prune step" prune!(maskedmodel, target_sparsity=target_sparsity, by=abs, verbose=true)
         MaskedLayers.updatemask!.(maskedmodel)
         @time "Finetune step" traintoconvergence!(maskedmodel, optimizer=ADAM(3e-4), train_data=(x_train, y_train), loss=logitcrossentropy, max_epochs=100, patience=3)
