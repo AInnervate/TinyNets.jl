@@ -111,16 +111,14 @@ function main(device)
     y_test = y_test |> device
 
 
-    traintoconvergence!(model, optimizer=ADAM(3e-4), train_data=(x_train, y_train), loss=logitcrossentropy, max_epochs=100, patience=5)
-    @info @sprintf("Original accuracy:\n\ttest\t%2.1f%%\n\ttrain\t%2.1f%%", 100*accuracy(model, x_test, y_test), 100*accuracy(model, x_train, y_train))
+    traintoconvergence!(model, optimizer=ADAM(3e-4), train_data=(x_train, y_train), loss=logitcrossentropy, max_epochs=120, patience=5)
 
     println()
     maskedmodel = mask(model)
-    for target_sparsity ∈ (0.5, 0.7, 0.8, 0.85, 0.9:0.02:0.96...)
+    for target_sparsity ∈ (0.5, 0.7, 0.8, 0.85, 0.9:0.02:0.98..., 0.99)
         @time "Prune step" prune!(maskedmodel, target_sparsity=target_sparsity, by=abs, verbose=true)
         MaskedLayers.updatemask!.(maskedmodel)
-        @time "Finetune step" traintoconvergence!(maskedmodel, optimizer=ADAM(3e-4), train_data=(x_train, y_train), loss=logitcrossentropy, max_epochs=100, patience=5)
-        @info @sprintf("Accuracy:\n\ttest\t%2.1f%%\n\ttrain\t%2.1f%%", 100*accuracy(maskedmodel, x_test, y_test), 100*accuracy(maskedmodel, x_train, y_train))
+        @time "Finetune step" traintoconvergence!(maskedmodel, optimizer=ADAM(3e-4), train_data=(x_train, y_train), loss=logitcrossentropy, max_epochs=120, patience=5)
     end
 
     println()
