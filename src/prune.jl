@@ -1,7 +1,7 @@
 module Prune
 
 using Flux
-using CUDA: @allowscalar
+using CUDA: CuArray
 using Random
 using Printf
 
@@ -41,17 +41,23 @@ function prune!(model; by::Function, target_sparsity::Real, verbose::Bool=false)
     end
 
     verbose && @info @sprintf("Current sparsity: %.1f%%. Pruning to target sparsity: %.1f%%.", 100*current_sparsity, 100*target_sparsity)
-    # TODO: try doing it on CPU and moving back to GPU if needed. It could be faster.
-    @allowscalar begin
-        refs = [Ref(p, i) for p in Flux.params(model) for i in eachindex(p) if !iszero(p[i])]
-        n_toprune = round(Int, Δsparsity * countparams(model))
-        indices = partialsortperm(refs, 1:n_toprune, by=by∘getindex)
-        for i ∈ indices
-            refs[i][] = zero(refs[i][])
+
+    # Copy to CPU if necessary
+    parameters = cpu.(Flux.params(model))
+    refs = [Ref(p, i) for p in parameters for i in eachindex(p) if !iszero(p[i])]
+    n_toprune = round(Int, Δsparsity * countparams(model))
+    indices = partialsortperm(refs, 1:n_toprune, by=by∘getindex)
+    for i ∈ indices
+        refs[i][] = zero(refs[i][])
+    end
+    # Copy back to GPU if necessary
+    for (p_new, p_old) in zip(parameters, Flux.params(model))
+        if p_old isa CuArray
+            copy!(p_old, p_new)
         end
     end
-    verbose && @info @sprintf("Final sparsity: %.1f%%.", 100*sparsity(model))
 
+    verbose && @info @sprintf("Final sparsity: %.1f%%.", 100*sparsity(model))
     return model
 end
 
