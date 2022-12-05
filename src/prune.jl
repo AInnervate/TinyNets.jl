@@ -24,7 +24,7 @@ drop(A, qty, by) = drop!(copy(A), qty, by)
 """
     prune!(model; by::Function, target_sparsity::Real)
 
-Set to zero the `round(target_sparsity * countparams(model))` parameters of `model` with the lowest values of `by`, which is assumed to be a non-negative function.
+Set to zero the `round(target_sparsity * countparams(model))` parameters of `model` with the lowest values of `by`.
 
 It considers the parameter pool the entire model. For example, `prune!(model; by=abs, target_sparsity=0.2)` performs a global magnitude pruning of 80% of the model.
 Layer-wise pruning can be achieved through broadcasting, e.g., `prune!.(model; by=abs, target_sparsity=0.1)`.
@@ -32,13 +32,19 @@ Layer-wise pruning can be achieved through broadcasting, e.g., `prune!.(model; b
 function prune!(model; by::Function, target_sparsity::Real, verbose::Bool=false)
     @assert 0 ≤ target_sparsity ≤ 1
 
-    verbose && @info @sprintf("Current sparsity: %.1f%%. Pruning to target sparsity: %.1f%%.", 100*sparsity(model), 100*target_sparsity)
+    # Check if the model is already sparse enough
+    current_sparsity = sparsity(model)
+    Δsparsity = target_sparsity - sparsity(model)
+    if Δsparsity ≤ 0
+        verbose && @info @sprintf("Current sparsity (%.1f%%) is already at least the target sparsity (%.1f%%).\n\tNothing to be done.", 100*current_sparsity, 100*target_sparsity)
+        return model
+    end
+
+    verbose && @info @sprintf("Current sparsity: %.1f%%. Pruning to target sparsity: %.1f%%.", 100*current_sparsity, 100*target_sparsity)
     # TODO: try doing it on CPU and moving back to GPU if needed. It could be faster.
     @allowscalar begin
-        # TODO: try considering only non-zero parameters
-        #       Besides the space savings, `by` could be a general function.
-        refs = [Ref(p, i) for p in Flux.params(model) for i in eachindex(p)]
-        n_toprune = round(Int, target_sparsity * length(refs))
+        refs = [Ref(p, i) for p in Flux.params(model) for i in eachindex(p) if !iszero(p[i])]
+        n_toprune = round(Int, Δsparsity * countparams(model))
         indices = partialsortperm(refs, 1:n_toprune, by=by∘getindex)
         for i ∈ indices
             refs[i][] = zero(refs[i][])
