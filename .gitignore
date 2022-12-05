@@ -21,3 +21,6 @@ docs/site
 *~
 *.[Tt]emp
 [Tt]emp*
+
+# Log files
+results/*

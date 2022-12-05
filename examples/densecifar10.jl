@@ -145,7 +145,7 @@ function main(io, device)
     )
 end
 
-open("results__$(now()).csv", "w") do io
+open("results/$(now()).csv", "w") do io
     println(io, "sparsity\tacc_test\tacc_train")
     @timev main(io, gpu)
 end
