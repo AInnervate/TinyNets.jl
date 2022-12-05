@@ -82,7 +82,7 @@ function traintoconvergence!(
     return model
 end
 
-function main(io, device)
+function main(io, device, max_epochs)
     data_train = MLDatasets.FashionMNIST(Float32, split=:train)
     x_train, y_train = data_train[:]
     x_train = Flux.flatten(x_train)
@@ -113,7 +113,7 @@ function main(io, device)
     y_test = y_test |> device
 
 
-    @time "Train" traintoconvergence!(model, optimizer=ADAM(3e-4), train_data=(x_train, y_train), loss=logitcrossentropy, max_epochs=120, patience=5)
+    @time "Train" traintoconvergence!(model, optimizer=ADAM(3e-4), train_data=(x_train, y_train), loss=logitcrossentropy, max_epochs=max_epochs, patience=5)
     original_acc_test = accuracy(model, x_test, y_test)
     original_acc_train = accuracy(model, x_train, y_train)
     @info @sprintf("Original accuracy:\n\ttest\t%2.1f%%\n\ttrain\t%2.1f%%", 100*original_acc_test, 100*original_acc_train)
@@ -124,7 +124,7 @@ function main(io, device)
     for target_sparsity ∈ (0.5, 0.7, 0.8, 0.85, 0.9:0.02:0.98..., 0.99)
         @time "Prune step" prune!(maskedmodel, target_sparsity=target_sparsity, by=abs, verbose=true)
         MaskedLayers.updatemask!.(maskedmodel)
-        @time "Finetune step" traintoconvergence!(maskedmodel, optimizer=ADAM(3e-4), train_data=(x_train, y_train), loss=logitcrossentropy, max_epochs=120, patience=5)
+        @time "Finetune step" traintoconvergence!(maskedmodel, optimizer=ADAM(3e-4), train_data=(x_train, y_train), loss=logitcrossentropy, max_epochs=max_epochs, patience=5)
 
         pruned_acc_test = accuracy(maskedmodel, x_test, y_test)
         pruned_acc_train = accuracy(maskedmodel, x_train, y_train)
@@ -147,5 +147,5 @@ end
 
 open("results/$(now()).csv", "w") do io
     println(io, "sparsity\tacc_test\tacc_train")
-    @timev main(io, gpu)
+    @timev main(io, gpu, 120)
 end
