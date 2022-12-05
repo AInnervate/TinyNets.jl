@@ -113,7 +113,7 @@ function main(io, device)
     y_test = y_test |> device
 
 
-    traintoconvergence!(model, optimizer=ADAM(3e-4), train_data=(x_train, y_train), loss=logitcrossentropy, max_epochs=120, patience=5)
+    @time "Train" traintoconvergence!(model, optimizer=ADAM(3e-4), train_data=(x_train, y_train), loss=logitcrossentropy, max_epochs=120, patience=5)
     original_acc_test = accuracy(model, x_test, y_test)
     original_acc_train = accuracy(model, x_train, y_train)
     @info @sprintf("Original accuracy:\n\ttest\t%2.1f%%\n\ttrain\t%2.1f%%", 100*original_acc_test, 100*original_acc_train)
