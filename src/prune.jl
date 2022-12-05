@@ -36,11 +36,11 @@ function prune!(model; by::Function, target_sparsity::Real, verbose::Bool=false)
     current_sparsity = sparsity(model)
     Δsparsity = target_sparsity - sparsity(model)
     if Δsparsity ≤ 0
-        verbose && @info @sprintf("Current sparsity (%.1f%%) is already at least the target sparsity (%.1f%%).\n\tNothing to be done.", 100*current_sparsity, 100*target_sparsity)
+        verbose && @info @sprintf("Current sparsity (%.2f%%) is already at least the target sparsity (%.2f%%).\n\tNothing to be done.", 100*current_sparsity, 100*target_sparsity)
         return model
     end
 
-    verbose && @info @sprintf("Current sparsity: %.1f%%. Pruning to target sparsity: %.1f%%.", 100*current_sparsity, 100*target_sparsity)
+    verbose && @info @sprintf("Current sparsity: %.2f%%. Pruning to target sparsity: %.2f%%.", 100*current_sparsity, 100*target_sparsity)
 
     # Copy to CPU if necessary
     parameters = cpu.(Flux.params(model))
@@ -57,7 +57,7 @@ function prune!(model; by::Function, target_sparsity::Real, verbose::Bool=false)
         end
     end
 
-    verbose && @info @sprintf("Final sparsity: %.1f%%.", 100*sparsity(model))
+    verbose && @info @sprintf("Final sparsity: %.2f%%.", 100*sparsity(model))
     return model
 end
 
