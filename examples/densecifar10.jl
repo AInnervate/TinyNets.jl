@@ -9,8 +9,10 @@ using Flux.Losses: logitcrossentropy
 using Flux: train!, loadmodel!, onehotbatch, onecold
 using CUDA
 CUDA.allowscalar(false)
-using Printf
 using MLDatasets
+using Dates
+using DelimitedFiles
+using Printf
 using Random
 Random.seed!(0x35c88aa0a17d0e83)
 
@@ -80,7 +82,7 @@ function traintoconvergence!(
     return model
 end
 
-function main(device)
+function main(io, device)
     data_train = MLDatasets.FashionMNIST(Float32, split=:train)
     x_train, y_train = data_train[:]
     x_train = Flux.flatten(x_train)
@@ -112,6 +114,10 @@ function main(device)
 
 
     traintoconvergence!(model, optimizer=ADAM(3e-4), train_data=(x_train, y_train), loss=logitcrossentropy, max_epochs=120, patience=5)
+    original_acc_test = accuracy(model, x_test, y_test)
+    original_acc_train = accuracy(model, x_train, y_train)
+    @info @sprintf("Original accuracy:\n\ttest\t%2.1f%%\n\ttrain\t%2.1f%%", 100*original_acc_test, 100*original_acc_train)
+    writedlm(io, [sparsity(model) original_acc_test original_acc_train])
 
     println()
     maskedmodel = mask(model)
@@ -119,6 +125,11 @@ function main(device)
         @time "Prune step" prune!(maskedmodel, target_sparsity=target_sparsity, by=abs, verbose=true)
         MaskedLayers.updatemask!.(maskedmodel)
         @time "Finetune step" traintoconvergence!(maskedmodel, optimizer=ADAM(3e-4), train_data=(x_train, y_train), loss=logitcrossentropy, max_epochs=120, patience=5)
+
+        pruned_acc_test = accuracy(maskedmodel, x_test, y_test)
+        pruned_acc_train = accuracy(maskedmodel, x_train, y_train)
+        @info @sprintf("Accuracy:\n\ttest\t%2.1f%%\n\ttrain\t%2.1f%%", 100*pruned_acc_test, 100*pruned_acc_train)
+        writedlm(io, [sparsity(maskedmodel) pruned_acc_test pruned_acc_train])
     end
 
     println()
@@ -129,10 +140,12 @@ function main(device)
             Δacc (train) %+2.1f%%
         """,
         100*sparsity(maskedmodel),
-        100*(accuracy(maskedmodel, x_test, y_test) - accuracy(model, x_test, y_test)),
-        100*(accuracy(maskedmodel, x_train, y_train) - accuracy(model, x_train, y_train)),
+        100*(accuracy(maskedmodel, x_test, y_test) - original_acc_test),
+        100*(accuracy(maskedmodel, x_train, y_train) - original_acc_train),
     )
 end
 
-
-@timev main(gpu)
+open("results__$(now()).csv", "w") do io
+    println(io, "sparsity\tacc_test\tacc_train")
+    @timev main(io, gpu)
+end
