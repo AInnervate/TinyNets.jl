@@ -35,6 +35,8 @@ function prune!(model; by::Function, target_sparsity::Real, verbose::Bool=false)
     verbose && @info @sprintf("Current sparsity: %.1f%%. Pruning to target sparsity: %.1f%%.", 100*sparsity(model), 100*target_sparsity)
     # TODO: try doing it on CPU and moving back to GPU if needed. It could be faster.
     @allowscalar begin
+        # TODO: try considering only non-zero parameters
+        #       Besides the space savings, `by` could be a general function.
         refs = [Ref(p, i) for p in Flux.params(model) for i in eachindex(p)]
         n_toprune = round(Int, target_sparsity * length(refs))
         indices = partialsortperm(refs, 1:n_toprune, by=by∘getindex)
