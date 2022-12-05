@@ -145,7 +145,9 @@ function main(io, device, max_epochs)
     )
 end
 
-open("results/$(now()).csv", "w") do io
+
+# Discards results file when running on REPL (makes experimentaton a bit easier)
+open(abspath(PROGRAM_FILE) == @__FILE__() ? "results/$(now()).csv" : tempname(), "w") do io
     println(io, "sparsity\tacc_test\tacc_train")
-    @timev main(io, gpu, 120)
+    @timev main(io, gpu, 2)
 end
