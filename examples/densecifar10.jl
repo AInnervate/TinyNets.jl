@@ -149,5 +149,5 @@ end
 # Discards results file when running on REPL (makes experimentaton a bit easier)
 open(abspath(PROGRAM_FILE) == @__FILE__() ? "results/$(now()).csv" : tempname(), "w") do io
     println(io, "sparsity\tacc_test\tacc_train")
-    @timev main(io, gpu, 2)
+    @timev main(io, gpu, 120)
 end
