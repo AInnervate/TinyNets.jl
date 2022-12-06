@@ -46,8 +46,8 @@ function prune!(model; by::Function, target_sparsity::Real, verbose::Bool=false)
     parameters = cpu.(Flux.params(model))
     refs = [Ref(p, i) for p in parameters for i in eachindex(p) if !iszero(p[i])]
     n_toprune = round(Int, Δsparsity * countparams(model))
-    indices = partialsortperm(refs, 1:n_toprune, by=by∘getindex)
-    @. setindex!(refs[indices], zero(eltype(refs[indices])))
+    target_indices = partialsortperm(refs, 1:n_toprune, by=by∘getindex)
+    @. setindex!(refs[target_indices], zero(eltype(refs[target_indices])))
     # Copy back to GPU if necessary
     for (p_new, p_old) in zip(parameters, Flux.params(model))
         if p_old isa CuArray
