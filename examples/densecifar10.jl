@@ -1,8 +1,3 @@
-include("../src/prune.jl")
-include("../src/maskedlayers.jl")
-using .Prune: prune!, sparsity
-using .MaskedLayers
-
 using Flux
 using Flux.Data: DataLoader
 using Flux.Losses: logitcrossentropy
@@ -15,6 +10,9 @@ using DelimitedFiles
 using Printf
 using Random
 Random.seed!(0x35c88aa0a17d0e83)
+
+include("../src/prune.jl")
+using .Prune
 
 
 accuracy(model, x, y) = count(onecold(cpu(model(x))) .== onecold(cpu(y))) / size(x)[end]
@@ -123,7 +121,6 @@ function main(io, device, max_epochs)
     maskedmodel = mask(model)
     for target_sparsity ∈ (0.5, 0.7, 0.8, 0.85, 0.9:0.02:0.98..., 0.99)
         @time "Prune step" prune!(maskedmodel, target_sparsity=target_sparsity, by=abs, verbose=true)
-        MaskedLayers.updatemask!.(maskedmodel)
         @time "Finetune step" traintoconvergence!(maskedmodel, optimizer=ADAM(3e-4), train_data=(x_train, y_train), loss=logitcrossentropy, max_epochs=max_epochs, patience=5)
 
         pruned_acc_test = accuracy(maskedmodel, x_test, y_test)

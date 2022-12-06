@@ -1,10 +1,5 @@
-module MaskedLayers
-
 using Flux
 using ChainRulesCore
-
-
-export mask, unmask
 
 
 struct MaskedLayer{T, Tm}
@@ -65,7 +60,4 @@ updatemask!(l) = nothing
 function (mlayer::MaskedLayer)(x...)
     @ignore_derivatives applymask!(mlayer)
     return mlayer.layer(x...)
-end
-
-
 end

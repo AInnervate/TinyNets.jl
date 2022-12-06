@@ -6,6 +6,11 @@ using Random
 using Printf
 
 include("./utils.jl")
+include("./maskedlayers.jl")
+
+export prune!
+export sparsity, nnz, countparams
+export mask, unmask
 
 
 function drop!(A::VecOrMat, qty::Int, by::Function)::VecOrMat
@@ -52,6 +57,7 @@ function prune!(model; by::Function, target_sparsity::Real, verbose::Bool=false)
             copy!(p_old, p_new)
         end
     end
+    updatemask!.(model)
 
     verbose && @info @sprintf("Final sparsity: %.2f%%.", 100*sparsity(model))
     return model
